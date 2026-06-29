@@ -4,3 +4,5 @@ docker/php/vendor/
 docker/php/storage/logs/
 docker/php/storage/uploads/
 docker/php/storage/exports/
+docker/php/database/seeds/usuarios_predeterminados.txt
+docker/php/database/seeds/_generate_passwords.php

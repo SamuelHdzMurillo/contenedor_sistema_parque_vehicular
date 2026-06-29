@@ -33,15 +33,42 @@ Busca la dirección IPv4 de tu adaptador de red (ejemplo: `192.168.1.50`).
 
 Definidas en el archivo `.env`:
 
-| Variable            | Valor por defecto   |
-|---------------------|---------------------|
-| Base de datos       | `parque_vehicular`  |
-| Usuario aplicación  | `parque_user`       |
-| Contraseña app      | `parque_pass`       |
-| Usuario root MySQL  | `root`              |
-| Contraseña root     | `root123`           |
+| Variable            | Valor por defecto      |
+|---------------------|------------------------|
+| Base de datos       | `sicv_cecyte_bcs`      |
+| Usuario aplicación  | `parque_user`          |
+| Contraseña app      | `parque_pass`          |
+| Usuario root MySQL  | `root`                 |
+| Contraseña root     | `root123`              |
 
 En phpMyAdmin usa **root** / **root123** o el usuario de la aplicación.
+
+### Usuarios de la aplicación (creados automáticamente)
+
+Al levantar el contenedor por primera vez (o tras `docker compose down -v`), se crean todas las tablas y un usuario por cada rol. Las contraseñas únicas están en:
+
+`docker/php/database/seeds/usuarios_predeterminados.txt`
+
+| Rol                    | Correo                         |
+|------------------------|--------------------------------|
+| Administrador General  | `admin@cecytebcs.edu.mx`       |
+| Admin. Transporte      | `transporte@cecytebcs.edu.mx`  |
+| Supervisor             | `supervisor@cecytebcs.edu.mx`  |
+| Responsable Vehículo   | `responsable@cecytebcs.edu.mx` |
+| Consulta               | `consulta@cecytebcs.edu.mx`    |
+
+No se cargan datos de demostración (vehículos, comisiones, catálogos, etc.); esas tablas quedan vacías.
+
+## Inicialización de la base de datos
+
+El contenedor **web** ejecuta `docker/php/database/bootstrap.sh` al arrancar. Si la base de datos aún no tiene el esquema, aplica migraciones, roles, permisos y usuarios predeterminados. Si ya existe, no hace nada.
+
+Para reiniciar desde cero:
+
+```powershell
+docker compose down -v
+docker compose up -d --build
+```
 
 ## Dónde van los datos
 
