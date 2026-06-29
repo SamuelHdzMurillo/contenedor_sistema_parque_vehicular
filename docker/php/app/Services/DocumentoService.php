@@ -1,0 +1,236 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Helpers\FileUploader;
+use App\Repositories\BaseRepository;
+use App\Repositories\DocumentoRepository;
+use App\Services\AuditService;
+
+final class DocumentoService extends BaseRepository
+{
+    public function __construct(
+        private readonly DocumentoRepository $repo = new DocumentoRepository(),
+        private readonly \App\Repositories\CatalogoRepository $catalogos = new \App\Repositories\CatalogoRepository(),
+    ) {
+        parent::__construct();
+    }
+
+    public function paginate(int $page = 1, ?int $vehiculoId = null): array
+    {
+        return $this->paginateGrouped($page, $vehiculoId);
+    }
+
+    public function paginateGrouped(int $page = 1, ?int $vehiculoId = null): array
+    {
+        $perPage = 15;
+        $offset = ($page - 1) * $perPage;
+        $params = [];
+        $where = 'WHERE d.activo = 1 AND d.vehiculo_id IS NOT NULL';
+
+        if ($vehiculoId) {
+            $where .= ' AND d.vehiculo_id = ?';
+            $params[] = $vehiculoId;
+        }
+
+        $total = (int) ($this->fetchOne(
+            "SELECT COUNT(DISTINCT d.vehiculo_id) AS c FROM documentos d {$where}",
+            $params
+        )['c'] ?? 0);
+
+        $vehicleParams = array_merge($params, [$perPage, $offset]);
+        $vehiculos = $this->fetchAll(
+            "SELECT v.id AS vehiculo_id, v.numero_economico, v.placas, v.marca, v.modelo
+             FROM vehiculos v
+             INNER JOIN documentos d ON d.vehiculo_id = v.id AND d.activo = 1
+             {$where}
+             GROUP BY v.id, v.numero_economico, v.placas, v.marca, v.modelo
+             ORDER BY v.numero_economico ASC
+             LIMIT ? OFFSET ?",
+            $vehicleParams
+        );
+
+        $grupos = [];
+        $vehicleIds = array_map(static fn (array $v): int => (int) $v['vehiculo_id'], $vehiculos);
+
+        if ($vehicleIds !== []) {
+            $placeholders = implode(',', array_fill(0, count($vehicleIds), '?'));
+            $docs = $this->fetchAll(
+                "SELECT d.id, d.vehiculo_id, d.tipo, d.titulo, d.numero_documento,
+                        d.fecha_vencimiento, d.version, d.archivo_ruta, d.archivo_tipo,
+                        DATEDIFF(d.fecha_vencimiento, CURDATE()) AS dias_restantes
+                 FROM documentos d
+                 WHERE d.activo = 1 AND d.vehiculo_id IN ({$placeholders})
+                 ORDER BY d.fecha_vencimiento IS NULL, d.fecha_vencimiento ASC, d.titulo ASC",
+                $vehicleIds
+            );
+
+            $docsByVehicle = [];
+            foreach ($docs as $doc) {
+                $docsByVehicle[(int) $doc['vehiculo_id']][] = $doc;
+            }
+
+            foreach ($vehiculos as $vehiculo) {
+                $id = (int) $vehiculo['vehiculo_id'];
+                $grupos[] = [
+                    'vehiculo_id' => $id,
+                    'numero_economico' => $vehiculo['numero_economico'],
+                    'placas' => $vehiculo['placas'],
+                    'marca' => $vehiculo['marca'],
+                    'modelo' => $vehiculo['modelo'],
+                    'documentos' => $docsByVehicle[$id] ?? [],
+                ];
+            }
+        }
+
+        $vehiculosFiltro = $this->catalogos->getVehiculosCatalogo();
+
+        return [
+            'grupos' => $grupos,
+            'vehiculos' => $vehiculosFiltro,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+        ];
+    }
+
+    public function find(int $id): ?array
+    {
+        $doc = $this->repo->findById($id);
+        if ($doc === null || (int) ($doc['activo'] ?? 0) !== 1) {
+            return null;
+        }
+
+        return $doc;
+    }
+
+    public function getFormData(): array
+    {
+        return [
+            'vehiculos' => $this->catalogos->getVehiculosCatalogo(),
+        ];
+    }
+
+    public function getEditFormData(int $id): ?array
+    {
+        $documento = $this->find($id);
+        if ($documento === null) {
+            return null;
+        }
+
+        return array_merge($this->getFormData(), ['documento' => $documento]);
+    }
+
+    public function create(array $data, array $file, int $userId): int
+    {
+        $ruta = FileUploader::uploadDocument($file, 'documentos');
+        if ($ruta === null) {
+            throw new \RuntimeException('No se pudo subir el archivo.');
+        }
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, storage_path('uploads/' . $ruta));
+        finfo_close($finfo);
+        $this->execute(
+            'INSERT INTO documentos (vehiculo_id, tipo, titulo, numero_documento, fecha_emision, fecha_vencimiento, archivo_ruta, archivo_tipo, uploaded_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                $data['vehiculo_id'] ? (int) $data['vehiculo_id'] : null,
+                documento_tipo_normalizado((string) ($data['tipo'] ?? ''), (string) ($data['titulo'] ?? '')),
+                $data['titulo'],
+                $data['numero_documento'] ?? null, $data['fecha_emision'] ?? null, $data['fecha_vencimiento'] ?? null,
+                $ruta, $mime ?: 'application/octet-stream', $userId,
+            ]
+        );
+        $id = (int) $this->lastInsertId();
+        AuditService::log('INSERT', 'documentos', $id, null, $data);
+        (new AlertaService())->sincronizar();
+
+        return $id;
+    }
+
+    public function getDownloadPath(int $id): ?array
+    {
+        $doc = $this->find($id);
+        if ($doc === null) {
+            return null;
+        }
+        $path = storage_path('uploads/' . $doc['archivo_ruta']);
+        if (!is_file($path)) {
+            return null;
+        }
+        return [
+            'path' => $path,
+            'filename' => basename($doc['archivo_ruta']),
+            'content_type' => $doc['archivo_tipo'],
+        ];
+    }
+
+    /** @return int|bool ID del nuevo documento si se subió archivo; true si solo metadatos; false si falló */
+    public function update(int $id, array $data, ?array $file, int $userId): int|bool
+    {
+        $doc = $this->find($id);
+        if ($doc === null) {
+            return false;
+        }
+
+        $payload = [
+            'titulo' => trim((string) ($data['titulo'] ?? '')),
+            'numero_documento' => $data['numero_documento'] ?? null,
+            'fecha_emision' => $data['fecha_emision'] ?? null,
+            'fecha_vencimiento' => $data['fecha_vencimiento'] ?? null,
+        ];
+
+        if ($payload['titulo'] === '') {
+            throw new \RuntimeException('El título es obligatorio.');
+        }
+
+        $hasFile = $file !== null && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+        if ($hasFile) {
+            $ruta = FileUploader::uploadDocument($file, 'documentos');
+            if ($ruta === null) {
+                throw new \RuntimeException('No se pudo subir el archivo.');
+            }
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, storage_path('uploads/' . $ruta));
+            finfo_close($finfo);
+
+            $newId = $this->repo->createVersion($id, array_merge($payload, [
+                'archivo_ruta' => $ruta,
+                'archivo_tipo' => $mime ?: 'application/octet-stream',
+                'uploaded_by' => $userId,
+            ]));
+            AuditService::log('UPDATE', 'documentos', $newId, $doc, array_merge($payload, ['reemplaza_id' => $id]));
+            (new AlertaService())->sincronizar();
+
+            return $newId;
+        }
+
+        if (!$this->repo->update($id, $payload)) {
+            return false;
+        }
+
+        AuditService::log('UPDATE', 'documentos', $id, $doc, $payload);
+        (new AlertaService())->sincronizar();
+
+        return true;
+    }
+
+    public function delete(int $id): bool
+    {
+        $doc = $this->find($id);
+        if ($doc === null) {
+            return false;
+        }
+
+        if (!$this->repo->softDelete($id)) {
+            return false;
+        }
+
+        AuditService::log('DELETE', 'documentos', $id, $doc, null);
+        (new AlertaService())->sincronizar();
+
+        return true;
+    }
+}

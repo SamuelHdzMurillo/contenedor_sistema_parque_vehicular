@@ -1,0 +1,6 @@
+.env
+docker/php/.env
+docker/php/vendor/
+docker/php/storage/logs/
+docker/php/storage/uploads/
+docker/php/storage/exports/
