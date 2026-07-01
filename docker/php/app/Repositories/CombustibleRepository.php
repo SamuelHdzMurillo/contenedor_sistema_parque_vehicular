@@ -10,10 +10,12 @@ final class CombustibleRepository extends BaseRepository
     {
         return $this->fetchOne(
             'SELECT c.*, v.numero_economico, v.placas, p.razon_social AS proveedor_nombre,
+                    tg.nombre AS tipo_gasolina_nombre,
                     CONCAT(u.nombre, " ", u.apellido_paterno) AS registrado_por_nombre
              FROM combustible_cargas c
              JOIN vehiculos v ON v.id = c.vehiculo_id
              LEFT JOIN proveedores p ON p.id = c.proveedor_id
+             LEFT JOIN tipos_gasolina tg ON tg.id = c.tipo_gasolina_id
              JOIN users u ON u.id = c.registrado_por
              WHERE c.id = ?',
             [$id]
@@ -24,12 +26,13 @@ final class CombustibleRepository extends BaseRepository
     {
         $this->execute(
             'INSERT INTO combustible_cargas (
-                vehiculo_id, proveedor_id, fecha, litros, importe, kilometraje,
+                vehiculo_id, proveedor_id, tipo_gasolina_id, fecha, litros, importe, kilometraje,
                 folio_ticket, factura_ruta, observaciones, rendimiento, costo_por_km, registrado_por
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 (int) $data['vehiculo_id'],
                 $data['proveedor_id'] ?? null,
+                $data['tipo_gasolina_id'] ?? null,
                 $data['fecha'],
                 (float) $data['litros'],
                 (float) $data['importe'],
@@ -50,12 +53,13 @@ final class CombustibleRepository extends BaseRepository
     {
         return $this->execute(
             'UPDATE combustible_cargas SET
-                proveedor_id = ?, fecha = ?, litros = ?, importe = ?, kilometraje = ?,
+                proveedor_id = ?, tipo_gasolina_id = ?, fecha = ?, litros = ?, importe = ?, kilometraje = ?,
                 folio_ticket = ?, factura_ruta = ?, observaciones = ?,
                 rendimiento = ?, costo_por_km = ?
              WHERE id = ?',
             [
                 $data['proveedor_id'] ?? null,
+                $data['tipo_gasolina_id'] ?? null,
                 $data['fecha'],
                 (float) $data['litros'],
                 (float) $data['importe'],
@@ -103,9 +107,10 @@ final class CombustibleRepository extends BaseRepository
         $rows = $this->fetchAll(
             "SELECT c.id, c.fecha, c.litros, c.importe, c.kilometraje, c.rendimiento, c.costo_por_km,
                     c.folio_ticket, c.factura_ruta,
-                    v.numero_economico
+                    v.numero_economico, tg.nombre AS tipo_gasolina_nombre
              FROM combustible_cargas c
              JOIN vehiculos v ON v.id = c.vehiculo_id
+             LEFT JOIN tipos_gasolina tg ON tg.id = c.tipo_gasolina_id
              {$where}
              ORDER BY c.fecha DESC, c.id DESC
              LIMIT ? OFFSET ?",

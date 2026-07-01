@@ -11,6 +11,7 @@ use App\Repositories\CatalogoRepository;
 use App\Repositories\ConductorRepository;
 use App\Repositories\PlantelRepository;
 use App\Repositories\ServicioRepository;
+use App\Repositories\TipoGasolinaRepository;
 
 final class CatalogoController extends BaseController
 {
@@ -20,6 +21,7 @@ final class CatalogoController extends BaseController
         $areas = new AreaRepository();
         $conductores = new ConductorRepository();
         $servicios = new ServicioRepository();
+        $tiposGasolina = new TipoGasolinaRepository();
 
         $this->render('catalogos.index', [
             'stats' => [
@@ -27,8 +29,23 @@ final class CatalogoController extends BaseController
                 'areas' => (int) ($areas->paginate(1, 1)['total'] ?? 0),
                 'conductores' => (int) ($conductores->paginate(1, 1)['total'] ?? 0),
                 'servicios' => (int) ($servicios->paginate(1, 1)['total'] ?? 0),
+                'tipos_gasolina' => (int) ($tiposGasolina->paginate(1, 1)['total'] ?? 0),
             ],
         ]);
+    }
+
+    public function apiTiposGasolina(Request $request): never
+    {
+        $items = (new CatalogoRepository())->getTiposGasolina();
+        $mapped = array_map(static function (array $t): array {
+            return [
+                'id' => (int) $t['id'],
+                'nombre' => (string) $t['nombre'],
+                'label' => (string) $t['nombre'],
+            ];
+        }, $items);
+
+        Response::json(['ok' => true, 'items' => $mapped]);
     }
 
     public function apiPlanteles(Request $request): never

@@ -5,6 +5,7 @@ $tabs = [
     'planteles' => ['url' => 'catalogos/planteles', 'label' => 'Planteles'],
     'areas' => ['url' => 'catalogos/areas', 'label' => 'Áreas'],
     'servicios' => ['url' => 'catalogos/servicios', 'label' => 'Servicios'],
+    'tipos_gasolina' => ['url' => 'catalogos/tipos-gasolina', 'label' => 'Gasolina'],
     'conductores' => ['url' => 'catalogos/conductores', 'label' => 'Conductores'],
 ];
 ?>

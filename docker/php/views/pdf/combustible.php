@@ -21,6 +21,7 @@ ob_start();
         ['label' => 'Vehículo', 'value' => pdf_val($c['numero_economico'] ?? null, '')],
         ['label' => 'Placas', 'value' => pdf_val($c['placas'] ?? null, '')],
         ['label' => 'Proveedor / gasolinera', 'value' => pdf_val($c['proveedor_nombre'] ?? null, '')],
+        ['label' => 'Tipo de gasolina', 'value' => pdf_val($c['tipo_gasolina_nombre'] ?? null, '')],
         ['label' => 'Litros cargados', 'value' => isset($c['litros']) ? number_format((float) $c['litros'], 2) : ''],
         ['label' => 'Importe ($)', 'value' => pdf_money($c['importe'] ?? null)],
         ['label' => 'Kilometraje al cargar', 'value' => isset($c['kilometraje']) ? number_format((int) $c['kilometraje']) . ' km' : ''],

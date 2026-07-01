@@ -907,7 +907,8 @@
             areas: 'catalogos/api/areas',
             conductores: 'catalogos/api/conductores',
             proveedores: 'catalogos/api/proveedores',
-            responsables: 'catalogos/api/responsables'
+            responsables: 'catalogos/api/responsables',
+            tipos_gasolina: 'catalogos/api/tipos-gasolina'
         };
         const endpoint = endpoints[type];
         if (!endpoint) {
@@ -1012,6 +1013,17 @@
                             select.value = current;
                         }
                         select.dispatchEvent(new Event('change', { bubbles: true }));
+                    });
+                }
+
+                if (type === 'tipos_gasolina') {
+                    document.querySelectorAll('[data-tipo-gasolina-select]').forEach(function (select) {
+                        rebuildSelect(select, items, function (item) {
+                            const option = document.createElement('option');
+                            option.value = String(item.id);
+                            option.textContent = item.label;
+                            return option;
+                        }, options);
                     });
                 }
             })
@@ -1392,6 +1404,82 @@
         });
     }
 
+    /* ——— Modal rápido de tipo de gasolina ——— */
+    function initTipoGasolinaQuickModal() {
+        const modal = document.querySelector('[data-tipo-gasolina-quick-modal]');
+        const openBtns = document.querySelectorAll('[data-tipo-gasolina-quick-open]');
+        if (!modal || openBtns.length === 0) return;
+
+        const form = modal.querySelector('[data-tipo-gasolina-quick-form]');
+        const errorBox = modal.querySelector('[data-tipo-gasolina-quick-error]');
+        const submitBtn = modal.querySelector('[data-tipo-gasolina-quick-submit]');
+
+        function showError(msg) {
+            if (!errorBox) return;
+            errorBox.textContent = msg;
+            errorBox.hidden = false;
+        }
+
+        function clearError() {
+            if (!errorBox) return;
+            errorBox.textContent = '';
+            errorBox.hidden = true;
+        }
+
+        function open() {
+            clearError();
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            lockBodyModal();
+            const firstInput = form ? form.querySelector('input:not([type="hidden"])') : null;
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }
+
+        function close() {
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+            unlockBodyModal();
+            if (form) {
+                form.reset();
+            }
+            clearError();
+        }
+
+        openBtns.forEach(function (btn) {
+            btn.addEventListener('click', open);
+        });
+
+        modal.querySelectorAll('[data-tipo-gasolina-quick-close]').forEach(function (btn) {
+            btn.addEventListener('click', close);
+        });
+
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                close();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && getTopModal() === modal) {
+                close();
+            }
+        });
+
+        if (!form) return;
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            clearError();
+            submitQuickForm(form, submitBtn, function (data) {
+                return window.SICV.refreshCatalog('tipos_gasolina', { selectedId: data.tipo_gasolina.id }).then(function () {
+                    close();
+                });
+            }, showError);
+        });
+    }
+
     /* ——— Modal rápido de responsable ——— */
     function initResponsableQuickModal() {
         const modal = document.querySelector('[data-responsable-quick-modal]');
@@ -1675,6 +1763,7 @@
         initPlantelQuickModal();
         initConductorQuickModal();
         initProveedorQuickModal();
+        initTipoGasolinaQuickModal();
         initResponsableQuickModal();
         initLightbox();
         initImagePreview();

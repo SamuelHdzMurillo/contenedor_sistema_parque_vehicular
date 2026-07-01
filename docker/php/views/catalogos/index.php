@@ -5,7 +5,7 @@ $stats = $stats ?? [];
 <div class="page-header">
     <div>
         <h1 class="page-title">Catálogos del sistema</h1>
-        <p class="page-subtitle">Planteles, áreas solicitantes, conductores y servicios de mantenimiento</p>
+        <p class="page-subtitle">Planteles, áreas, conductores, servicios y tipos de gasolina</p>
     </div>
 </div>
 
@@ -31,6 +31,11 @@ $stats = $stats ?? [];
         <span class="dash-kpi-label">Servicios</span>
         <span class="dash-kpi-value text-warning"><?= (int) ($stats['servicios'] ?? 0) ?></span>
         <span class="dash-kpi-note">mantenimiento preventivo</span>
+    </div>
+    <div class="dash-kpi">
+        <span class="dash-kpi-label">Gasolina</span>
+        <span class="dash-kpi-value text-danger"><?= (int) ($stats['tipos_gasolina'] ?? 0) ?></span>
+        <span class="dash-kpi-note">tipos de combustible</span>
     </div>
 </div>
 
@@ -95,6 +100,25 @@ $stats = $stats ?? [];
                     <a href="<?= url('catalogos/servicios') ?>" class="btn btn-primary btn-sm">Ver servicios</a>
                     <?php if (can('catalogos.create')): ?>
                     <a href="<?= url('catalogos/servicios/create') ?>" class="btn btn-accent btn-sm">+ Nuevo</a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3>Tipos de gasolina</h3>
+                    <p class="card-header-hint">Magna, Premium, Diésel, etc.</p>
+                </div>
+                <span class="badge badge-danger"><?= (int) ($stats['tipos_gasolina'] ?? 0) ?></span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-2">Tipos de combustible al registrar cargas. Puede agregar más desde el formulario de combustible.</p>
+                <div class="d-flex gap-1 flex-wrap">
+                    <a href="<?= url('catalogos/tipos-gasolina') ?>" class="btn btn-primary btn-sm">Ver tipos</a>
+                    <?php if (can('catalogos.create')): ?>
+                    <a href="<?= url('catalogos/tipos-gasolina/create') ?>" class="btn btn-accent btn-sm">+ Nuevo</a>
                     <?php endif; ?>
                 </div>
             </div>

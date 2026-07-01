@@ -31,6 +31,7 @@ final class CombustibleService
         return [
             'vehiculos' => $this->catalogos->getVehiculosCatalogo(),
             'proveedores' => $this->catalogos->getProveedores('combustible'),
+            'tipos_gasolina' => $this->catalogos->getTiposGasolina(),
         ];
     }
 
@@ -54,6 +55,23 @@ final class CombustibleService
                 'El kilometraje al cargar (' . number_format($kilometraje) . ' km) no puede ser menor al actual del vehículo (' . number_format($kmActual) . ' km).'
             );
         }
+        $tipoGasolinaId = (int) ($data['tipo_gasolina_id'] ?? 0);
+        if ($tipoGasolinaId <= 0) {
+            throw new \RuntimeException('Seleccione el tipo de gasolina cargada.');
+        }
+        $tipoGasolina = $this->catalogos->getTiposGasolina();
+        $tipoValido = false;
+        foreach ($tipoGasolina as $tg) {
+            if ((int) $tg['id'] === $tipoGasolinaId) {
+                $tipoValido = true;
+                break;
+            }
+        }
+        if (!$tipoValido) {
+            throw new \RuntimeException('El tipo de gasolina seleccionado no es válido.');
+        }
+        $data['tipo_gasolina_id'] = $tipoGasolinaId;
+
         $litros = (float) $data['litros'];
         $metricas = $this->repo->calcularRendimiento($vehiculoId, $kilometraje, $litros);
         if ($metricas !== null) {

@@ -2,6 +2,7 @@
 $pageTitle = 'Registrar carga';
 $vehiculos = $vehiculos ?? [];
 $proveedores = $proveedores ?? [];
+$tipos_gasolina = $tipos_gasolina ?? [];
 $preVehiculo = $_GET['vehiculo_id'] ?? old('vehiculo_id');
 $kilometrajeInicial = old('kilometraje');
 if ($kilometrajeInicial === null || $kilometrajeInicial === '') {
@@ -41,6 +42,20 @@ $kilometrajeInicial = $kilometrajeInicial ?? '';
                 <label class="form-label" for="kilometraje">Kilometraje al cargar <span class="required">*</span></label>
                 <input type="number" id="kilometraje" name="kilometraje" class="form-control" required min="0" data-km-target value="<?= e((string) $kilometrajeInicial) ?>">
                 <small class="form-hint text-muted" data-km-hint>Seleccione un vehículo para ver el kilometraje actual.</small>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="tipo_gasolina_id">Tipo de gasolina <span class="required">*</span></label>
+                <div class="input-group">
+                    <select id="tipo_gasolina_id" name="tipo_gasolina_id" class="form-select" required data-tipo-gasolina-select>
+                        <option value="">Seleccione…</option>
+                        <?php foreach ($tipos_gasolina as $tg): ?>
+                        <option value="<?= (int) $tg['id'] ?>" <?= (string) old('tipo_gasolina_id') === (string) $tg['id'] ? 'selected' : '' ?>><?= e($tg['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (can('catalogos.create') || can('combustible.create')): ?>
+                    <button type="button" class="btn btn-accent" data-tipo-gasolina-quick-open title="Agregar tipo de gasolina" aria-label="Agregar tipo de gasolina">+</button>
+                    <?php endif; ?>
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label" for="litros">Litros <span class="required">*</span></label>
@@ -93,4 +108,7 @@ $kilometrajeInicial = $kilometrajeInicial ?? '';
 
 <?php if (can('proveedores.create')): ?>
 <?php App\Core\View::component('modal-proveedor-quick', ['tipo' => 'combustible', 'contexto' => 'combustible']); ?>
+<?php endif; ?>
+<?php if (can('catalogos.create') || can('combustible.create')): ?>
+<?php App\Core\View::component('modal-tipo-gasolina-quick'); ?>
 <?php endif; ?>

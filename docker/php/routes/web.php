@@ -22,6 +22,7 @@ use App\Controllers\PlantelController;
 use App\Controllers\ProveedorController;
 use App\Controllers\ReporteController;
 use App\Controllers\ServicioController;
+use App\Controllers\TipoGasolinaController;
 use App\Controllers\UsuarioController;
 use App\Controllers\VehiculoController;
 use App\Middlewares\AuthMiddleware;
@@ -162,6 +163,7 @@ $router->get('formatos/combustible/{id}', [FormularioController::class, 'combust
 
 // ——— Catálogos (áreas, conductores, planteles) ———
 $router->get('catalogos', [CatalogoController::class, 'index'], $perm('catalogos.read'));
+$router->get('catalogos/api/tipos-gasolina', [CatalogoController::class, 'apiTiposGasolina'], $auth);
 $router->get('catalogos/api/planteles', [CatalogoController::class, 'apiPlanteles'], $auth);
 $router->get('catalogos/api/areas', [CatalogoController::class, 'apiAreas'], $auth);
 $router->get('catalogos/api/conductores', [CatalogoController::class, 'apiConductores'], $auth);
@@ -192,6 +194,13 @@ $router->get('catalogos/conductores', [ConductorController::class, 'index'], $pe
 $router->get('catalogos/conductores/create', [ConductorController::class, 'create'], $perm('catalogos.create'));
 $router->post('catalogos/conductores', [ConductorController::class, 'store'], $perm('catalogos.create'));
 $router->post('catalogos/conductores/quick', [ConductorController::class, 'quickStore'], $perm('catalogos.create'));
+$router->get('catalogos/tipos-gasolina', [TipoGasolinaController::class, 'index'], $perm('catalogos.read'));
+$router->get('catalogos/tipos-gasolina/create', [TipoGasolinaController::class, 'create'], $perm('catalogos.create'));
+$router->post('catalogos/tipos-gasolina', [TipoGasolinaController::class, 'store'], $perm('catalogos.create'));
+$router->post('catalogos/tipos-gasolina/quick', [TipoGasolinaController::class, 'quickStore'], $auth);
+$router->get('catalogos/tipos-gasolina/{id}/edit', [TipoGasolinaController::class, 'edit'], $perm('catalogos.update'));
+$router->post('catalogos/tipos-gasolina/{id}', [TipoGasolinaController::class, 'update'], $perm('catalogos.update'));
+$router->post('catalogos/tipos-gasolina/{id}/toggle', [TipoGasolinaController::class, 'toggle'], $perm('catalogos.update'));
 $router->get('catalogos/conductores/{id}/edit', [ConductorController::class, 'edit'], $perm('catalogos.update'));
 $router->post('catalogos/conductores/{id}', [ConductorController::class, 'update'], $perm('catalogos.update'));
 $router->post('catalogos/conductores/{id}/toggle', [ConductorController::class, 'toggle'], $perm('catalogos.update'));

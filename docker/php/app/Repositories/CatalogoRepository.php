@@ -54,6 +54,17 @@ final class CatalogoRepository extends BaseRepository
         );
     }
 
+    public function getTiposGasolina(bool $soloActivos = true): array
+    {
+        $sql = 'SELECT id, nombre FROM tipos_gasolina';
+        if ($soloActivos) {
+            $sql .= ' WHERE activo = 1';
+        }
+        $sql .= ' ORDER BY nombre ASC';
+
+        return $this->fetchAll($sql);
+    }
+
     public function getProveedores(?string $tipo = null, bool $soloActivos = true): array
     {
         $params = [];
