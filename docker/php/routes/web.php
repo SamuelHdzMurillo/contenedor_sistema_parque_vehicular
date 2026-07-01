@@ -98,6 +98,8 @@ $router->get('danios', [DanioController::class, 'index'], $perm('danios.read'));
 $router->get('danios/create', [DanioController::class, 'create'], $perm('danios.create'));
 $router->post('danios', [DanioController::class, 'store'], $perm('danios.create'));
 $router->get('danios/{id}', [DanioController::class, 'show'], $perm('danios.read'));
+$router->get('danios/{id}/edit', [DanioController::class, 'edit'], $perm('danios.update'));
+$router->post('danios/{id}', [DanioController::class, 'update'], $perm('danios.update'));
 $router->post('danios/{id}/estado', [DanioController::class, 'updateEstado'], $perm('danios.update'));
 $router->post('danios/{id}/fotos', [DanioController::class, 'uploadFotos'], $perm('danios.update'));
 $router->post('danios/{id}/fotos/{fotoId}/delete', [DanioController::class, 'deleteFoto'], $perm('danios.update'));

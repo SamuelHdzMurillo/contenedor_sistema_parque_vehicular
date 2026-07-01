@@ -90,6 +90,33 @@ final class DanioController extends BaseController
         $this->render('danios.show', $data);
     }
 
+    public function edit(Request $request, string $id): never
+    {
+        $data = $this->danios->getFormDataForEdit((int) $id);
+        if ($data === null) {
+            flash('error', 'Registro de daño no encontrado.');
+            $this->redirect('danios');
+        }
+        $this->render('danios.edit', $data);
+    }
+
+    public function update(Request $request, string $id): never
+    {
+        $this->validateCsrf($request);
+        if (auth_id() === null) {
+            $this->redirect('login');
+        }
+
+        $error = $this->danios->update((int) $id, $request->all());
+        if ($error !== null) {
+            $_SESSION['_old'] = $request->all();
+            flash('error', $error);
+            $this->redirect('danios/' . $id . '/edit');
+        }
+        flash('success', 'Daño actualizado correctamente.');
+        $this->redirect('danios/' . $id);
+    }
+
     public function updateEstado(Request $request, string $id): never
     {
         $this->validateCsrf($request);

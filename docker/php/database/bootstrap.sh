@@ -43,6 +43,27 @@ is_initialized() {
     [ "${count:-0}" -gt 0 ]
 }
 
+ensure_default_data() {
+    if ! table_exists "roles"; then
+        return 0
+    fi
+
+    local role_count user_count
+    role_count=$(mysql_cmd -N "$DB_NAME" -e "SELECT COUNT(*) FROM roles" 2>/dev/null || echo "0")
+    user_count=$(mysql_cmd -N "$DB_NAME" -e "SELECT COUNT(*) FROM users" 2>/dev/null || echo "0")
+
+    if [ "${role_count:-0}" -eq 0 ]; then
+        echo "[bootstrap] Roles no encontrados; cargando permisos..."
+        run_sql_file "${SEED_DIR}/002_seed_minimal.sql"
+    fi
+
+    if [ "${user_count:-0}" -eq 0 ]; then
+        echo "[bootstrap] Usuarios no encontrados; cargando usuarios predeterminados..."
+        run_sql_file "${SEED_DIR}/004_seed_users.sql"
+        echo "[bootstrap] Usuarios predeterminados listos."
+    fi
+}
+
 table_exists() {
     local table="$1"
     local count
@@ -52,10 +73,33 @@ table_exists() {
     [ "${count:-0}" -gt 0 ]
 }
 
-run_sql_file() {
+column_exists() {
+    local table="$1"
+    local column="$2"
+    local count
+    count=$(mysql_cmd -N "$DB_NAME" -e \
+        "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='${DB_NAME}' AND table_name='${table}' AND column_name='${column}'" \
+        2>/dev/null || echo "0")
+    [ "${count:-0}" -gt 0 ]
+}
+
+apply_migration_file() {
     local file="$1"
-    echo "[bootstrap] Ejecutando $(basename "$file")..."
-    sed 's/\r$//' "$file" | mysql_cmd "$DB_NAME"
+    local base="$2"
+    echo "[bootstrap] Ejecutando ${base}..."
+    set +e
+    sed 's/\r$//' "$file" | mysql_cmd "$DB_NAME" 2>&1
+    local status=${PIPESTATUS[1]}
+    set -e
+    if [ "$status" -eq 0 ]; then
+        return 0
+    fi
+    if migration_already_effective "$base"; then
+        echo "[bootstrap] ${base} ya estaba aplicada; se registra como completada."
+        return 0
+    fi
+    echo "[bootstrap] ADVERTENCIA: ${base} falló (código ${status}); se continúa el arranque."
+    return 1
 }
 
 ensure_migrations_table() {
@@ -92,17 +136,58 @@ should_skip_migration() {
     return 1
 }
 
+run_sql_file() {
+    local file="$1"
+    apply_migration_file "$file" "$(basename "$file")"
+}
+
 migration_already_effective() {
     local base="$1"
     case "$base" in
+        003_comision_salida_regreso.sql)
+            column_exists "comisiones" "doc_regreso_ruta"
+            ;;
+        006_mantenimiento_factura.sql)
+            column_exists "mantenimientos" "factura_total"
+            ;;
+        008_combustible_ticket.sql)
+            column_exists "combustible_cargas" "folio_ticket"
+            ;;
         010_*)
             table_exists "conductores"
+            ;;
+        016_mantenimiento_historico.sql)
+            column_exists "mantenimientos" "es_historico"
+            ;;
+        017_mantenimiento_servicio.sql)
+            column_exists "mantenimientos" "servicio"
             ;;
         019_mantenimiento_servicios.sql)
             table_exists "mantenimiento_servicios"
             ;;
         019_fix_permissions_utf8.sql)
             return 0
+            ;;
+        022_inspeccion_folio_combustible.sql)
+            column_exists "inspecciones" "folio"
+            ;;
+        023_inspeccion_historico.sql)
+            column_exists "inspecciones" "es_historico"
+            ;;
+        024_mantenimiento_intervalos.sql)
+            column_exists "mantenimiento_servicios" "intervalo_dias"
+            ;;
+        026_tipos_gasolina.sql)
+            table_exists "tipos_gasolina"
+            ;;
+        027_comision_tanque_adicional.sql)
+            column_exists "comisiones" "tanque_adicional_litros_regreso"
+            ;;
+        028_comision_tanque_adicional_porcentaje.sql)
+            column_exists "comisiones" "tanque_adicional_salida"
+            ;;
+        029_comision_tanque_tipo_gasolina.sql)
+            column_exists "comisiones" "tanque_adicional_tipo_gasolina_id"
             ;;
         *)
             return 1
@@ -155,9 +240,14 @@ apply_pending_migrations() {
         if migration_applied "$base"; then
             continue
         fi
-        run_sql_file "$migration"
-        mark_migration_applied "$base"
-        applied=$((applied + 1))
+        if migration_already_effective "$base"; then
+            mark_migration_applied "$base"
+            continue
+        fi
+        if apply_migration_file "$migration" "$base"; then
+            mark_migration_applied "$base"
+            applied=$((applied + 1))
+        fi
     done
 
     if [ "$applied" -gt 0 ]; then
@@ -172,6 +262,7 @@ wait_for_db
 if is_initialized; then
     echo "[bootstrap] Base de datos ya inicializada; verificando migraciones..."
     apply_pending_migrations
+    ensure_default_data
     exit 0
 fi
 
@@ -191,11 +282,13 @@ for migration in "${MIG_DIR}"/[0-9][0-9][0-9]_*.sql; do
     if should_skip_migration "$base"; then
         continue
     fi
-    run_sql_file "$migration"
-    mark_migration_applied "$base"
+    if apply_migration_file "$migration" "$base"; then
+        mark_migration_applied "$base"
+    fi
 done
 
 run_sql_file "${SEED_DIR}/003_cleanup_demo_data.sql"
 run_sql_file "${SEED_DIR}/004_seed_users.sql"
+ensure_default_data
 
 echo "[bootstrap] Base de datos lista: tablas, roles, permisos y usuarios predeterminados."

@@ -66,6 +66,19 @@ final class DanioService extends BaseRepository
         ];
     }
 
+    public function getFormDataForEdit(int $id): ?array
+    {
+        $danio = $this->fetchOne(
+            'SELECT d.*, v.numero_economico, v.placas FROM danios d JOIN vehiculos v ON v.id = d.vehiculo_id WHERE d.id = ?',
+            [$id]
+        );
+        if ($danio === null) {
+            return null;
+        }
+
+        return array_merge($this->getFormData(), ['danio' => $danio]);
+    }
+
     public function create(array $data, int $userId): int
     {
         $this->execute(
@@ -141,6 +154,46 @@ final class DanioService extends BaseRepository
             unlink($path);
         }
         AuditService::log('DELETE', 'danio_fotos', $fotoId, $foto, null);
+    }
+
+    public function update(int $id, array $data): ?string
+    {
+        $danio = $this->fetchOne('SELECT * FROM danios WHERE id = ?', [$id]);
+        if ($danio === null) {
+            return 'Registro de daño no encontrado.';
+        }
+
+        $vehiculoId = (int) ($data['vehiculo_id'] ?? 0);
+        $tipoDano = trim((string) ($data['tipo_dano'] ?? ''));
+        $ubicacion = trim((string) ($data['ubicacion'] ?? ''));
+        $descripcion = trim((string) ($data['descripcion'] ?? ''));
+
+        $tiposValidos = ['golpe', 'rayon', 'cristal', 'defensa', 'faro', 'interior', 'llanta'];
+        if ($vehiculoId <= 0) {
+            return 'Seleccione un vehículo.';
+        }
+        if ($this->fetchOne('SELECT id FROM vehiculos WHERE id = ?', [$vehiculoId]) === null) {
+            return 'Vehículo no encontrado.';
+        }
+        if (!in_array($tipoDano, $tiposValidos, true)) {
+            return 'Tipo de daño no válido.';
+        }
+        if ($ubicacion === '' || $descripcion === '') {
+            return 'Complete ubicación y descripción.';
+        }
+
+        $this->execute(
+            'UPDATE danios SET vehiculo_id = ?, tipo_dano = ?, ubicacion = ?, descripcion = ? WHERE id = ?',
+            [$vehiculoId, $tipoDano, $ubicacion, $descripcion, $id]
+        );
+        AuditService::log('UPDATE', 'danios', $id, $danio, [
+            'vehiculo_id' => $vehiculoId,
+            'tipo_dano' => $tipoDano,
+            'ubicacion' => $ubicacion,
+            'descripcion' => $descripcion,
+        ]);
+
+        return null;
     }
 
     public function updateEstado(int $id, string $estado, int $userId, ?string $comentario = null): ?string

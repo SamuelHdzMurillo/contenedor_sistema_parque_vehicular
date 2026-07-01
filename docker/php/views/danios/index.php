@@ -34,7 +34,12 @@
                     <td><?= e($d['tipo_dano']) ?></td>
                     <td><?= e($d['ubicacion']) ?></td>
                     <td><span class="badge badge-warning"><?= e(str_replace('_', ' ', $d['estado'])) ?></span></td>
-                    <td><a href="<?= url('danios/' . $d['id']) ?>" class="btn btn-sm btn-info">Ver</a></td>
+                    <td class="table-actions">
+                        <a href="<?= url('danios/' . $d['id']) ?>" class="btn btn-sm btn-info">Ver</a>
+                        <?php if (can('danios.update')): ?>
+                        <a href="<?= url('danios/' . $d['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endforeach; endif; ?>
             </tbody>

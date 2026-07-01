@@ -10,6 +10,9 @@ $estados = ['reportado','en_evaluacion','en_reparacion','reparado','cerrado_sin_
         <p class="page-subtitle"><span class="badge badge-warning"><?= e(str_replace('_', ' ', $d['estado'] ?? '')) ?></span></p>
     </div>
     <div class="page-actions">
+        <?php if (can('danios.update')): ?>
+        <a href="<?= url('danios/' . $d['id'] . '/edit') ?>" class="btn btn-primary">Editar datos</a>
+        <?php endif; ?>
         <a href="<?= url('formatos/danio/' . $d['id']) ?>" class="btn btn-secondary" target="_blank">Descargar PDF / Imprimir</a>
     </div>
 </div>
