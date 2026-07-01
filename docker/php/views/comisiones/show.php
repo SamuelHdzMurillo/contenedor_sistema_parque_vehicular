@@ -150,7 +150,10 @@ $renderHerramientas = static function (array $tipos, string $estadoLabel = 'Entr
             <div class="meta-grid">
                 <div class="meta-item"><label>Hora salida</label><span><?= e(substr($c['hora_salida'] ?? '', 0, 5)) ?></span></div>
                 <div class="meta-item"><label>Km salida</label><span><?= number_format((int) $c['km_salida']) ?></span></div>
-                <div class="meta-item"><label>Combustible</label><span><?= e(combustible_fraccion_etiqueta($c['combustible_salida'] ?? null)) ?></span></div>
+                <div class="meta-item"><label>Combustible (tanque principal)</label><span><?= e(vehiculo_tipo_combustible_etiqueta($c['tipo_combustible'] ?? null)) ?> — <?= e(combustible_fraccion_etiqueta($c['combustible_salida'] ?? null)) ?></span></div>
+                <?php if (!empty($c['tanque_adicional'])): ?>
+                <div class="meta-item"><label>Tanque adicional</label><span><?= e($c['tanque_adicional_tipo_gasolina_nombre'] ?? '—') ?> — <?= e(combustible_fraccion_etiqueta($c['tanque_adicional_salida'] ?? null)) ?> al salir</span></div>
+                <?php endif; ?>
             </div>
 
             <h4 style="margin:1.25rem 0 .5rem;font-size:.9rem">Luces del tablero encendidas</h4>
@@ -175,7 +178,10 @@ $renderHerramientas = static function (array $tipos, string $estadoLabel = 'Entr
             <div class="meta-grid">
                 <div class="meta-item"><label>Hora regreso</label><span><?= $c['hora_regreso'] ? e(substr($c['hora_regreso'], 0, 5)) : '—' ?></span></div>
                 <div class="meta-item"><label>Km regreso</label><span><?= $c['km_regreso'] !== null ? number_format((int) $c['km_regreso']) : '—' ?></span></div>
-                <div class="meta-item"><label>Combustible</label><span><?= $c['combustible_regreso'] !== null ? e(combustible_fraccion_etiqueta($c['combustible_regreso'])) : '—' ?></span></div>
+                <div class="meta-item"><label>Combustible (tanque principal)</label><span><?= e(vehiculo_tipo_combustible_etiqueta($c['tipo_combustible'] ?? null)) ?> — <?= $c['combustible_regreso'] !== null ? e(combustible_fraccion_etiqueta($c['combustible_regreso'])) : '—' ?></span></div>
+                <?php if (!empty($c['tanque_adicional'])): ?>
+                <div class="meta-item"><label>Tanque adicional</label><span><?= e($c['tanque_adicional_tipo_gasolina_nombre'] ?? '—') ?> — <?= $c['tanque_adicional_regreso'] !== null ? e(combustible_fraccion_etiqueta($c['tanque_adicional_regreso'])) . ' al regresar' : '—' ?></span></div>
+                <?php endif; ?>
             </div>
 
             <h4 style="margin:1.25rem 0 .5rem;font-size:.9rem">Luces del tablero encendidas</h4>
@@ -202,8 +208,11 @@ $renderHerramientas = static function (array $tipos, string $estadoLabel = 'Entr
             <?php else: ?>
             <p class="text-muted">El vehículo está en comisión. Complete el formulario siguiente al regresar.</p>
             <div class="meta-grid mb-2">
-                <div class="meta-item"><label>Combustible salida registrado</label><span><?= e(combustible_fraccion_etiqueta($c['combustible_salida'] ?? null)) ?></span></div>
                 <div class="meta-item"><label>Km salida</label><span><?= number_format((int) $c['km_salida']) ?></span></div>
+                <div class="meta-item"><label>Combustible principal (salida)</label><span><?= e(vehiculo_tipo_combustible_etiqueta($c['tipo_combustible'] ?? null)) ?> — <?= e(combustible_fraccion_etiqueta($c['combustible_salida'] ?? null)) ?></span></div>
+                <?php if (!empty($c['tanque_adicional'])): ?>
+                <div class="meta-item"><label>Tanque adicional (salida)</label><span><?= e($c['tanque_adicional_tipo_gasolina_nombre'] ?? '—') ?> — <?= e(combustible_fraccion_etiqueta($c['tanque_adicional_salida'] ?? null)) ?></span></div>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
 
@@ -308,6 +317,15 @@ $renderHerramientas = static function (array $tipos, string $estadoLabel = 'Entr
                     'valuePorcentaje' => old_nonempty('combustible_regreso', $c['combustible_salida'] ?? 100),
                     'required' => true,
                 ]); ?>
+                <?php if (!empty($c['tanque_adicional'])): ?>
+                <?php App\Core\View::component('tanque-adicional-fields', [
+                    'mode' => 'regreso',
+                    'tieneTanqueAdicional' => 1,
+                    'combustibleRegreso' => old('tanque_adicional_regreso', $c['tanque_adicional_salida'] ?? 100),
+                    'tipoGasolinaId' => $c['tanque_adicional_tipo_gasolina_id'] ?? null,
+                    'tipos_gasolina' => $tipos_gasolina ?? [],
+                ]); ?>
+                <?php endif; ?>
                 <button type="submit" class="btn btn-primary">Finalizar comisión</button>
             </form>
             <?php endif; ?>

@@ -162,10 +162,17 @@ if ($herramientasSalida === [] && !empty($vehiculo_herramientas_preset) && is_ar
                 <label class="form-label" for="destino">Destino <span class="required">*</span></label>
                 <input type="text" id="destino" name="destino" class="form-control" required value="<?= e((string) old('destino')) ?>" placeholder="Ciudad, plantel o lugar de la comisión">
             </div>
-            <div class="form-group mb-0">
+            <div class="form-group">
                 <label class="form-label" for="motivo">Motivo <span class="required">*</span></label>
                 <textarea id="motivo" name="motivo" class="form-textarea" required rows="3" placeholder="Breve descripción del motivo del viaje"><?= e((string) old('motivo')) ?></textarea>
             </div>
+            <?php App\Core\View::component('tanque-adicional-fields', [
+                'mode' => 'salida',
+                'tieneTanqueAdicional' => old('tanque_adicional', 0),
+                'combustibleSalida' => old('tanque_adicional_salida', null),
+                'tipoGasolinaId' => old('tanque_adicional_tipo_gasolina_id', null),
+                'tipos_gasolina' => $tipos_gasolina ?? [],
+            ]); ?>
         </div>
     </div>
 
@@ -283,4 +290,7 @@ if ($herramientasSalida === [] && !empty($vehiculo_herramientas_preset) && is_ar
 <?php App\Core\View::component('modal-area-quick', ['planteles' => $planteles]); ?>
 <?php App\Core\View::component('modal-plantel-quick'); ?>
 <?php App\Core\View::component('modal-conductor-quick', ['areas' => $areas]); ?>
+<?php endif; ?>
+<?php if (can('catalogos.create') || can('comisiones.create')): ?>
+<?php App\Core\View::component('modal-tipo-gasolina-quick'); ?>
 <?php endif; ?>

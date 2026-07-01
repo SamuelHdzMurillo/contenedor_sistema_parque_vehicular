@@ -63,14 +63,14 @@ final class ComisionController extends BaseController
             $this->redirect('comisiones');
         }
         $ultimoMantenimiento = $this->comisiones->getUltimoMantenimiento((int) $comision['vehiculo_id']);
-        $this->render('comisiones.show', [
+        $this->render('comisiones.show', array_merge([
             'comision' => $comision,
             'ultimo_mantenimiento' => $ultimoMantenimiento,
             'luces_tablero' => $this->comisiones->getLucesCatalog(),
             'liquidos' => $this->comisiones->getLiquidosCatalog(),
             'nivel_opciones' => $this->comisiones->getNivelOpciones(),
             'herramientas_catalogo' => $this->comisiones->getHerramientasCatalog(),
-        ]);
+        ], array_intersect_key($this->comisiones->getFormData(), array_flip(['tipos_gasolina']))));
     }
 
     public function cargarDocumento(Request $request, string $id): never
@@ -164,7 +164,7 @@ final class ComisionController extends BaseController
     /** @param array<string, mixed> $data */
     private function filterOldInput(array $data): array
     {
-        foreach (['combustible_salida', 'combustible_regreso'] as $field) {
+        foreach (['combustible_salida', 'combustible_regreso', 'tanque_adicional_salida', 'tanque_adicional_regreso'] as $field) {
             if (!array_key_exists($field, $data)) {
                 continue;
             }

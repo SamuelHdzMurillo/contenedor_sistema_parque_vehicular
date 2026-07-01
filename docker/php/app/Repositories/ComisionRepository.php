@@ -38,7 +38,8 @@ final class ComisionRepository extends BaseRepository
     {
         return $this->fetchOne(
             'SELECT c.*, v.numero_economico, v.placas, v.capacidad_tanque, v.kilometraje_actual,
-                    v.marca, v.modelo,
+                    v.marca, v.modelo, v.tipo_combustible,
+                    tg.nombre AS tanque_adicional_tipo_gasolina_nombre,
                     CONCAT(a.nombre, IF(p.clave IS NOT NULL, CONCAT(" - ", p.clave), "")) AS area_solicitante_nombre,
                     cond.telefono AS conductor_telefono,
                     CONCAT(u.nombre, " ", u.apellido_paterno) AS responsable_nombre
@@ -47,6 +48,7 @@ final class ComisionRepository extends BaseRepository
              JOIN areas a ON a.id = c.area_solicitante_id
              LEFT JOIN planteles p ON p.id = a.plantel_id
              LEFT JOIN conductores cond ON cond.id = c.conductor_id
+             LEFT JOIN tipos_gasolina tg ON tg.id = c.tanque_adicional_tipo_gasolina_id
              JOIN users u ON u.id = c.responsable_id
              WHERE c.id = ?',
             [$id]
@@ -169,9 +171,10 @@ final class ComisionRepository extends BaseRepository
             'INSERT INTO comisiones (
                 folio, vehiculo_id, area_solicitante_id, responsable_id, conductor_nombre, conductor_id,
                 responsable_regreso_nombre, responsable_regreso_id,
-                destino, motivo, fecha, hora_salida, km_salida, combustible_salida, observaciones,
-                estado, created_by
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                destino, motivo, fecha, hora_salida, km_salida, combustible_salida,
+                tanque_adicional, tanque_adicional_salida, tanque_adicional_regreso, tanque_adicional_tipo_gasolina_id,
+                observaciones, estado, created_by
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $data['folio'],
                 (int) $data['vehiculo_id'],
@@ -187,6 +190,10 @@ final class ComisionRepository extends BaseRepository
                 $data['hora_salida'],
                 (int) $data['km_salida'],
                 (float) $data['combustible_salida'],
+                (int) ($data['tanque_adicional'] ?? 0),
+                $data['tanque_adicional_salida'] ?? null,
+                $data['tanque_adicional_regreso'] ?? null,
+                $data['tanque_adicional_tipo_gasolina_id'] ?? null,
                 $data['observaciones'] ?? null,
                 $data['estado'] ?? 'borrador',
                 $data['created_by'] ?? null,
@@ -204,6 +211,7 @@ final class ComisionRepository extends BaseRepository
                 responsable_regreso_nombre = ?, responsable_regreso_id = ?,
                 destino = ?, motivo = ?, fecha = ?, hora_salida = ?, hora_regreso = ?,
                 km_salida = ?, km_regreso = ?, combustible_salida = ?, combustible_regreso = ?,
+                tanque_adicional = ?, tanque_adicional_salida = ?, tanque_adicional_regreso = ?, tanque_adicional_tipo_gasolina_id = ?,
                 km_recorridos = ?, litros_consumidos = ?, rendimiento = ?,
                 observaciones = ?, firma_digital = ?, estado = ?, updated_at = NOW()
              WHERE id = ?',
@@ -224,6 +232,10 @@ final class ComisionRepository extends BaseRepository
                 $data['km_regreso'] ?? null,
                 (float) $data['combustible_salida'],
                 $data['combustible_regreso'] ?? null,
+                (int) ($data['tanque_adicional'] ?? 0),
+                $data['tanque_adicional_salida'] ?? null,
+                $data['tanque_adicional_regreso'] ?? null,
+                $data['tanque_adicional_tipo_gasolina_id'] ?? null,
                 $data['km_recorridos'] ?? null,
                 $data['litros_consumidos'] ?? null,
                 $data['rendimiento'] ?? null,

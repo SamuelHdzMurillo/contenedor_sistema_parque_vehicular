@@ -1441,6 +1441,23 @@ function inspeccion_folio(array $inspeccion): string
     return 'INS-' . $year . '-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
 }
 
+function vehiculo_tipo_combustible_etiqueta(?string $tipo): string
+{
+    if ($tipo === null || trim($tipo) === '') {
+        return '—';
+    }
+
+    $labels = [
+        'gasolina' => 'Gasolina',
+        'diesel' => 'Diésel',
+        'hibrido' => 'Híbrido',
+        'electrico' => 'Eléctrico',
+        'gnc' => 'GNC',
+    ];
+
+    return $labels[$tipo] ?? ucfirst($tipo);
+}
+
 function combustible_fraccion_etiqueta(mixed $valor): string
 {
     if ($valor === null || $valor === '') {

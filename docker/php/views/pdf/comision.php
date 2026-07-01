@@ -248,7 +248,11 @@ $filaCampos = static function (array $campos, callable $campo, int $cols = 3): v
         <?php $filaCampos([
             ['Hora de salida', pdf_time($c['hora_salida'] ?? null)],
             ['Kilometraje salida', isset($c['km_salida']) ? number_format((int) $c['km_salida']) : ''],
-            ['Combustible salida', isset($c['combustible_salida']) ? combustible_fraccion_etiqueta($c['combustible_salida']) : ''],
+            ['Tipo combustible (tanque principal)', vehiculo_tipo_combustible_etiqueta($c['tipo_combustible'] ?? null)],
+            ['Nivel tanque principal (salida)', isset($c['combustible_salida']) ? combustible_fraccion_etiqueta($c['combustible_salida']) : ''],
+            ['Tanque adicional', !empty($c['tanque_adicional']) ? 'Sí' : 'No'],
+            ['Tipo combustible (tanque adicional)', !empty($c['tanque_adicional']) ? pdf_val($c['tanque_adicional_tipo_gasolina_nombre'] ?? null) : ''],
+            ['Nivel tanque adicional (salida)', !empty($c['tanque_adicional']) && isset($c['tanque_adicional_salida']) ? combustible_fraccion_etiqueta($c['tanque_adicional_salida']) : ''],
         ], $campo); ?>
         <div class="inline-block"><span class="lbl">Observaciones de salida</span>
             <div class="box"><?= e(pdf_val($c['observaciones'] ?? null)) ?: '&nbsp;' ?></div>
@@ -314,7 +318,10 @@ $filaCampos = static function (array $campos, callable $campo, int $cols = 3): v
                 ['Hora de regreso', pdf_time($c['hora_regreso'] ?? null)],
                 ['Kilometraje regreso', isset($c['km_regreso']) ? number_format((int) $c['km_regreso']) : ''],
                 ['Km recorridos', isset($c['km_recorridos']) ? number_format((int) $c['km_recorridos']) : ''],
-                ['Combustible regreso', isset($c['combustible_regreso']) ? combustible_fraccion_etiqueta($c['combustible_regreso']) : ''],
+                ['Tipo combustible (tanque principal)', vehiculo_tipo_combustible_etiqueta($c['tipo_combustible'] ?? null)],
+                ['Nivel tanque principal (regreso)', isset($c['combustible_regreso']) ? combustible_fraccion_etiqueta($c['combustible_regreso']) : ''],
+                ['Tipo combustible (tanque adicional)', !empty($c['tanque_adicional']) ? pdf_val($c['tanque_adicional_tipo_gasolina_nombre'] ?? null) : ''],
+                ['Nivel tanque adicional (regreso)', !empty($c['tanque_adicional']) && isset($c['tanque_adicional_regreso']) ? combustible_fraccion_etiqueta($c['tanque_adicional_regreso']) : ''],
                 ['Rendimiento (km/L)', isset($c['rendimiento']) ? number_format((float) $c['rendimiento'], 2) : ''],
                 ['Litros consumidos', isset($c['litros_consumidos']) ? number_format((float) $c['litros_consumidos'], 2) : ''],
             ], $campo); ?>

@@ -1556,6 +1556,65 @@
         });
     }
 
+    /* ——— Tanque adicional en comisiones ——— */
+    function initTanqueAdicionalFields() {
+        document.querySelectorAll('[data-tanque-adicional]').forEach(function (block) {
+            const salidaWrap = block.querySelector('[data-tanque-adicional-salida]');
+            const regresoWrap = block.querySelector('[data-tanque-adicional-regreso]');
+            const toggles = block.querySelectorAll('[data-tanque-adicional-toggle]');
+
+            function gaugeSelects(wrapper) {
+                return wrapper ? wrapper.querySelectorAll('[data-combustible-value]') : [];
+            }
+
+            function isActive() {
+                const checked = block.querySelector('[data-tanque-adicional-toggle]:checked');
+                return checked ? checked.value === '1' : block.hasAttribute('data-tanque-adicional-active');
+            }
+
+            function syncGaugeRequired(wrapper, active) {
+                gaugeSelects(wrapper).forEach(function (select) {
+                    select.required = active;
+                    if (!active) {
+                        select.value = '';
+                    } else if (select.required && select.value === '') {
+                        select.value = '100';
+                        const group = select.closest('[data-combustible-gauge]');
+                        if (group) {
+                            syncCombustibleGauge(group);
+                        }
+                    }
+                });
+                if (wrapper) {
+                    wrapper.querySelectorAll('[data-tanque-adicional-tipo]').forEach(function (select) {
+                        select.required = active;
+                        if (!active) {
+                            select.value = '';
+                        }
+                    });
+                }
+            }
+
+            function sync() {
+                const active = isActive();
+                block.toggleAttribute('data-tanque-adicional-active', active);
+                if (salidaWrap) {
+                    salidaWrap.hidden = !active;
+                    syncGaugeRequired(salidaWrap, active);
+                }
+                if (regresoWrap && toggles.length > 0) {
+                    regresoWrap.hidden = !active;
+                    syncGaugeRequired(regresoWrap, active);
+                }
+            }
+
+            toggles.forEach(function (toggle) {
+                toggle.addEventListener('change', sync);
+            });
+            sync();
+        });
+    }
+
     /* ——— Combustible (medidor + select) ——— */
     function combustibleGaugeLevel(pct) {
         if (pct <= 0) {
@@ -1752,6 +1811,7 @@
         initConfirm();
         initDashLights();
         initKmAutofill();
+        initTanqueAdicionalFields();
         initCombustibleFields();
         initFolioInputs();
         initLucesAutofill();

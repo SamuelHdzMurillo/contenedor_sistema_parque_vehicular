@@ -318,6 +318,19 @@ if ($nombreRegreso !== '') {
             'valuePorcentaje' => $c['combustible_salida'] ?? 100,
             'required' => true,
         ]); ?>
+
+        <?php
+        $tanqueMode = $esFinalizada ? 'completo' : 'salida';
+        App\Core\View::component('tanque-adicional-fields', [
+            'mode' => $tanqueMode,
+            'tieneTanqueAdicional' => $c['tanque_adicional'] ?? 0,
+            'combustibleSalida' => $c['tanque_adicional_salida'] ?? null,
+            'combustibleRegreso' => $c['tanque_adicional_regreso'] ?? null,
+            'tipoGasolinaId' => $c['tanque_adicional_tipo_gasolina_id'] ?? null,
+            'tipos_gasolina' => $tipos_gasolina ?? [],
+        ]);
+        ?>
+
         <?php if ($esFinalizada): ?>
         <?php App\Core\View::component('combustible-fraccion-select', [
             'id' => 'combustible_regreso',
@@ -339,4 +352,7 @@ if ($nombreRegreso !== '') {
 <?php App\Core\View::component('modal-area-quick', ['planteles' => $planteles]); ?>
 <?php App\Core\View::component('modal-plantel-quick'); ?>
 <?php App\Core\View::component('modal-conductor-quick', ['areas' => $areas]); ?>
+<?php endif; ?>
+<?php if (can('catalogos.create') || can('comisiones.create')): ?>
+<?php App\Core\View::component('modal-tipo-gasolina-quick'); ?>
 <?php endif; ?>

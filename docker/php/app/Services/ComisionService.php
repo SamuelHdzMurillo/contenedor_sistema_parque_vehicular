@@ -43,6 +43,7 @@ final class ComisionService
             'liquidos' => ComisionRepository::LIQUIDOS,
             'nivel_opciones' => ComisionRepository::NIVEL_OPCIONES,
             'herramientas_catalogo' => ComisionRepository::HERRAMIENTAS,
+            'tipos_gasolina' => $this->catalogos->getTiposGasolina(),
             'folio_sugerido' => $this->repo->generateFolio(),
         ];
     }
@@ -121,6 +122,7 @@ final class ComisionService
         $data['responsable_id'] = (int) ($data['responsable_id'] ?? $userId);
         $data = $this->normalizeResponsableRegreso($data);
         $data = $this->normalizeConductor($data);
+        $data = $this->normalizeTanqueAdicional($data);
         $data = $this->normalizeCombustiblePostKeys($data);
         $data = $this->coalesceCombustiblePost($data, 'combustible_salida', 100.0);
         $data['combustible_salida'] = $this->resolveCombustiblePercent($data, 'combustible_salida', 100.0);
@@ -152,6 +154,7 @@ final class ComisionService
 
             $data = $this->normalizeResponsableRegreso($data);
             $data = $this->normalizeConductor($data);
+            $data = $this->normalizeTanqueAdicional($data, $before);
             $data = $this->normalizeCombustiblePostKeys($data);
             $data = $this->sanitizeCombustibleInputForUpdate($data);
             $data = $this->applyCombustibleFields($data, $before);
@@ -445,7 +448,7 @@ final class ComisionService
         $legacyValue = $data[$legacyField];
         unset($data[$legacyField]);
 
-        foreach (['combustible_salida', 'combustible_regreso'] as $field) {
+        foreach (['combustible_salida', 'combustible_regreso', 'tanque_adicional_salida', 'tanque_adicional_regreso'] as $field) {
             if (!array_key_exists($field, $data) || trim((string) ($data[$field] ?? '')) === '') {
                 $data[$field] = $legacyValue;
             }
@@ -530,11 +533,12 @@ final class ComisionService
         }
 
         if ($required) {
-            throw new \InvalidArgumentException(
-                $field === 'combustible_regreso'
-                    ? 'Indique el nivel de combustible al regreso.'
-                    : 'Indique el nivel de combustible a la salida.'
-            );
+            throw new \InvalidArgumentException(match ($field) {
+                'combustible_regreso' => 'Indique el nivel de combustible al regreso.',
+                'tanque_adicional_regreso' => 'Indique el nivel del tanque adicional al regresar.',
+                'tanque_adicional_salida' => 'Indique el nivel del tanque adicional al salir.',
+                default => 'Indique el nivel de combustible a la salida.',
+            });
         }
 
         throw new \InvalidArgumentException('Nivel de combustible no válido.');
@@ -558,7 +562,7 @@ final class ComisionService
 
     private function sanitizeCombustibleInputForUpdate(array $data): array
     {
-        foreach (['combustible_salida', 'combustible_regreso'] as $campo) {
+        foreach (['combustible_salida', 'combustible_regreso', 'tanque_adicional_salida', 'tanque_adicional_regreso'] as $campo) {
             if (!array_key_exists($campo, $data)) {
                 continue;
             }
@@ -569,6 +573,82 @@ final class ComisionService
         }
 
         return $data;
+    }
+
+    private function normalizeTanqueAdicional(array $data, ?array $before = null, string $context = 'create'): array
+    {
+        $estado = (string) ($before['estado'] ?? '');
+        $beforeTieneTanque = (int) ($before['tanque_adicional'] ?? 0) === 1;
+
+        if ($context === 'finalizar') {
+            if (!$beforeTieneTanque) {
+                return $data;
+            }
+
+            $data = $this->coalesceCombustiblePost(
+                $data,
+                'tanque_adicional_regreso',
+                (float) ($before['tanque_adicional_salida'] ?? 100)
+            );
+            $data['tanque_adicional_regreso'] = $this->resolveCombustiblePercent(
+                $data,
+                'tanque_adicional_regreso',
+                (float) ($before['tanque_adicional_salida'] ?? 100)
+            );
+
+            return $data;
+        }
+
+        if (array_key_exists('tanque_adicional', $data)) {
+            $raw = $data['tanque_adicional'];
+            $data['tanque_adicional'] = in_array($raw, [1, '1', true, 'on', 'si'], true) ? 1 : 0;
+        } elseif ($before !== null) {
+            $data['tanque_adicional'] = (int) ($before['tanque_adicional'] ?? 0);
+        } else {
+            $data['tanque_adicional'] = 0;
+        }
+
+        if ((int) $data['tanque_adicional'] === 1) {
+            $data = $this->coalesceCombustiblePost($data, 'tanque_adicional_salida', 100.0);
+            $data['tanque_adicional_salida'] = $this->resolveCombustiblePercent($data, 'tanque_adicional_salida', 100.0);
+            $data['tanque_adicional_tipo_gasolina_id'] = $this->resolveTanqueTipoGasolinaId($data, $before);
+        } else {
+            $data['tanque_adicional_salida'] = null;
+            $data['tanque_adicional_tipo_gasolina_id'] = null;
+            if ($estado !== 'finalizada') {
+                $data['tanque_adicional_regreso'] = null;
+            }
+        }
+
+        if ($estado === 'finalizada' && (int) ($data['tanque_adicional'] ?? 0) === 1) {
+            $regresoDefault = (float) ($before['tanque_adicional_regreso'] ?? $before['tanque_adicional_salida'] ?? 100);
+            $data = $this->coalesceCombustiblePost($data, 'tanque_adicional_regreso', $regresoDefault);
+            $data['tanque_adicional_regreso'] = $this->resolveCombustiblePercent(
+                $data,
+                'tanque_adicional_regreso',
+                $regresoDefault
+            );
+        }
+
+        return $data;
+    }
+
+    private function resolveTanqueTipoGasolinaId(array $data, ?array $before = null): int
+    {
+        $raw = $data['tanque_adicional_tipo_gasolina_id']
+            ?? ($before['tanque_adicional_tipo_gasolina_id'] ?? null);
+        $id = ($raw === '' || $raw === null) ? null : (int) $raw;
+        if ($id === null || $id <= 0) {
+            throw new \InvalidArgumentException('Seleccione el tipo de combustible del tanque adicional.');
+        }
+
+        foreach ($this->catalogos->getTiposGasolina() as $tipo) {
+            if ((int) ($tipo['id'] ?? 0) === $id) {
+                return $id;
+            }
+        }
+
+        throw new \InvalidArgumentException('El tipo de combustible del tanque adicional no es válido.');
     }
 
     private function normalizeConductor(array $data): array
@@ -625,6 +705,7 @@ final class ComisionService
             }
 
             $data = $this->normalizeCombustiblePostKeys($data);
+            $data = $this->normalizeTanqueAdicional($data, $comision, 'finalizar');
             $merged = array_merge($comision, $data);
             $merged['combustible_regreso'] = $this->resolveCombustiblePercent(
                 $data,
