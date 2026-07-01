@@ -43,16 +43,135 @@ is_initialized() {
     [ "${count:-0}" -gt 0 ]
 }
 
+table_exists() {
+    local table="$1"
+    local count
+    count=$(mysql_cmd -N "$DB_NAME" -e \
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}' AND table_name='${table}'" \
+        2>/dev/null || echo "0")
+    [ "${count:-0}" -gt 0 ]
+}
+
 run_sql_file() {
     local file="$1"
     echo "[bootstrap] Ejecutando $(basename "$file")..."
     sed 's/\r$//' "$file" | mysql_cmd "$DB_NAME"
 }
 
+ensure_migrations_table() {
+    mysql_cmd "$DB_NAME" -e "
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            migration VARCHAR(255) NOT NULL PRIMARY KEY,
+            applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB;
+    "
+}
+
+migration_applied() {
+    local name="$1"
+    local count
+    count=$(mysql_cmd -N "$DB_NAME" -e \
+        "SELECT COUNT(*) FROM schema_migrations WHERE migration='${name}'" \
+        2>/dev/null || echo "0")
+    [ "${count:-0}" -gt 0 ]
+}
+
+mark_migration_applied() {
+    local name="$1"
+    mysql_cmd "$DB_NAME" -e \
+        "INSERT IGNORE INTO schema_migrations (migration) VALUES ('${name}')"
+}
+
+should_skip_migration() {
+    local base="$1"
+    case "$base" in
+        000_*|001_*|012_*)
+            return 0
+            ;;
+    esac
+    return 1
+}
+
+migration_already_effective() {
+    local base="$1"
+    case "$base" in
+        010_*)
+            table_exists "conductores"
+            ;;
+        019_mantenimiento_servicios.sql)
+            table_exists "mantenimiento_servicios"
+            ;;
+        019_fix_permissions_utf8.sql)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+backfill_schema_migrations() {
+    local count
+    count=$(mysql_cmd -N "$DB_NAME" -e "SELECT COUNT(*) FROM schema_migrations" 2>/dev/null || echo "0")
+    if [ "${count:-0}" -gt 0 ]; then
+        return 0
+    fi
+
+    echo "[bootstrap] Registrando migraciones previas (actualización de instalación existente)..."
+    for migration in "${MIG_DIR}"/[0-9][0-9][0-9]_*.sql; do
+        [ -f "$migration" ] || continue
+        base=$(basename "$migration")
+        if should_skip_migration "$base"; then
+            mark_migration_applied "$base"
+            continue
+        fi
+        if migration_already_effective "$base"; then
+            mark_migration_applied "$base"
+            continue
+        fi
+        case "$base" in
+            010_*)
+                # Pendiente: se aplicará en apply_pending_migrations.
+                ;;
+            *)
+                # Instalaciones anteriores asumen el resto de migraciones ya aplicadas.
+                mark_migration_applied "$base"
+                ;;
+        esac
+    done
+}
+
+apply_pending_migrations() {
+    ensure_migrations_table
+    backfill_schema_migrations
+
+    local applied=0
+    for migration in "${MIG_DIR}"/[0-9][0-9][0-9]_*.sql; do
+        [ -f "$migration" ] || continue
+        base=$(basename "$migration")
+        if should_skip_migration "$base"; then
+            continue
+        fi
+        if migration_applied "$base"; then
+            continue
+        fi
+        run_sql_file "$migration"
+        mark_migration_applied "$base"
+        applied=$((applied + 1))
+    done
+
+    if [ "$applied" -gt 0 ]; then
+        echo "[bootstrap] Migraciones pendientes aplicadas: ${applied}."
+    else
+        echo "[bootstrap] Sin migraciones pendientes."
+    fi
+}
+
 wait_for_db
 
 if is_initialized; then
-    echo "[bootstrap] Base de datos ya inicializada; se omite."
+    echo "[bootstrap] Base de datos ya inicializada; verificando migraciones..."
+    apply_pending_migrations
     exit 0
 fi
 
@@ -63,15 +182,17 @@ mysql_cmd -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4
 run_sql_file "${MIG_DIR}/001_schema.sql"
 run_sql_file "${SEED_DIR}/002_seed_minimal.sql"
 
+ensure_migrations_table
+mark_migration_applied "001_schema.sql"
+
 for migration in "${MIG_DIR}"/[0-9][0-9][0-9]_*.sql; do
     [ -f "$migration" ] || continue
     base=$(basename "$migration")
-    case "$base" in
-        000_*|001_*|012_*)
-            continue
-            ;;
-    esac
+    if should_skip_migration "$base"; then
+        continue
+    fi
     run_sql_file "$migration"
+    mark_migration_applied "$base"
 done
 
 run_sql_file "${SEED_DIR}/003_cleanup_demo_data.sql"
