@@ -38,6 +38,10 @@
                         <a href="<?= url('danios/' . $d['id']) ?>" class="btn btn-sm btn-info">Ver</a>
                         <?php if (can('danios.update')): ?>
                         <a href="<?= url('danios/' . $d['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                        <form action="<?= url('danios/' . $d['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar este reporte de daño? Esta acción no se puede deshacer.">Eliminar</button>
+                        </form>
                         <?php endif; ?>
                     </td>
                 </tr>

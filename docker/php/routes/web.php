@@ -103,6 +103,7 @@ $router->post('danios/{id}', [DanioController::class, 'update'], $perm('danios.u
 $router->post('danios/{id}/estado', [DanioController::class, 'updateEstado'], $perm('danios.update'));
 $router->post('danios/{id}/fotos', [DanioController::class, 'uploadFotos'], $perm('danios.update'));
 $router->post('danios/{id}/fotos/{fotoId}/delete', [DanioController::class, 'deleteFoto'], $perm('danios.update'));
+$router->post('danios/{id}/eliminar', [DanioController::class, 'eliminar'], $perm('danios.update'));
 
 // ——— Mantenimiento ———
 $router->get('mantenimiento', [MantenimientoController::class, 'index'], $perm('mantenimiento.read'));
@@ -129,6 +130,9 @@ $router->post('proveedores/{id}/toggle', [ProveedorController::class, 'toggle'],
 $router->get('combustible', [CombustibleController::class, 'index'], $perm('combustible.read'));
 $router->get('combustible/create', [CombustibleController::class, 'create'], $perm('combustible.create'));
 $router->post('combustible', [CombustibleController::class, 'store'], $perm('combustible.create'));
+$router->get('combustible/{id}/edit', [CombustibleController::class, 'edit'], $perm('combustible.update'));
+$router->post('combustible/{id}', [CombustibleController::class, 'update'], $perm('combustible.update'));
+$router->post('combustible/{id}/eliminar', [CombustibleController::class, 'eliminar'], $perm('combustible.update'));
 
 // ——— Documentos ———
 $router->get('documentos', [DocumentoController::class, 'index'], $perm('documentos.read'));

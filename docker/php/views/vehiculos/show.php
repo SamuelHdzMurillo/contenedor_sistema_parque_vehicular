@@ -31,9 +31,6 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
         <?php if (can('vehiculos.update')): ?>
         <a href="<?= url('vehiculos/' . $id . '/edit') ?>" class="btn btn-accent">Editar</a>
         <?php endif; ?>
-        <?php if (can('herramientas.read')): ?>
-        <a href="<?= url('herramientas/vehiculo/' . $id) ?>" class="btn btn-secondary">Herramientas</a>
-        <?php endif; ?>
         <?php if (can('comisiones.create')): ?>
         <a href="<?= url('comisiones/create') ?>?vehiculo_id=<?= (int) $id ?>" class="btn btn-accent">Nueva comisión</a>
         <?php endif; ?>
@@ -253,7 +250,18 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
                         <td><?= $c['km_recorridos'] !== null ? number_format((int) $c['km_recorridos']) : '—' ?></td>
                         <td><?= $c['rendimiento'] !== null ? number_format((float) $c['rendimiento'], 2) . ' km/L' : '—' ?></td>
                         <td><span class="badge badge-secondary"><?= e($comEstados[$c['estado']] ?? $c['estado']) ?></span></td>
-                        <td><a href="<?= url('comisiones/' . $c['id']) ?>" class="btn btn-sm btn-info">Ver</a></td>
+                        <td class="table-actions">
+                            <a href="<?= url('comisiones/' . $c['id']) ?>" class="btn btn-sm btn-info">Ver</a>
+                            <?php if (can('comisiones.update')): ?>
+                            <a href="<?= url('comisiones/' . $c['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                            <?php endif; ?>
+                            <?php if (can('comisiones.delete')): ?>
+                            <form action="<?= url('comisiones/' . $c['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar esta comisión?">Eliminar</button>
+                            </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
@@ -268,10 +276,10 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
             <?php endif; ?>
             <div class="table-responsive">
                 <table class="table">
-                    <thead><tr><th>Folio</th><th>Tipo</th><th>Fecha</th><th>Km</th><th>Proveedor</th><th>Costo</th><th>Estado</th></tr></thead>
+                    <thead><tr><th>Folio</th><th>Tipo</th><th>Fecha</th><th>Km</th><th>Proveedor</th><th>Costo</th><th>Estado</th><th></th></tr></thead>
                     <tbody>
                     <?php if (empty($mantenimientos)): ?>
-                    <tr><td colspan="7" class="text-center text-muted">Sin registros</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted">Sin registros</td></tr>
                     <?php else: foreach ($mantenimientos as $m): ?>
                     <tr>
                         <td><a href="<?= url('mantenimiento/' . $m['id']) ?>"><?= e($m['folio']) ?></a></td>
@@ -281,6 +289,18 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
                         <td><?= e($m['proveedor'] ?? '—') ?></td>
                         <td><?= format_money($m['costo']) ?></td>
                         <td><span class="badge badge-secondary"><?= e(str_replace('_', ' ', $m['estado'])) ?></span></td>
+                        <td class="table-actions">
+                            <a href="<?= url('mantenimiento/' . $m['id']) ?>" class="btn btn-sm btn-info">Ver</a>
+                            <?php if (can('mantenimiento.update')): ?>
+                            <a href="<?= url('mantenimiento/' . $m['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                            <?php endif; ?>
+                            <?php if (can('mantenimiento.delete')): ?>
+                            <form action="<?= url('mantenimiento/' . $m['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar este mantenimiento?">Eliminar</button>
+                            </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
@@ -295,10 +315,10 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
             <?php endif; ?>
             <div class="table-responsive">
                 <table class="table">
-                    <thead><tr><th>Fecha</th><th>Litros</th><th>Importe</th><th>Km</th><th>Rendimiento</th><th>Costo/km</th></tr></thead>
+                    <thead><tr><th>Fecha</th><th>Litros</th><th>Importe</th><th>Km</th><th>Rendimiento</th><th>Costo/km</th><th></th></tr></thead>
                     <tbody>
                     <?php if (empty($combustible)): ?>
-                    <tr><td colspan="6" class="text-center text-muted">Sin cargas</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted">Sin cargas</td></tr>
                     <?php else: foreach ($combustible as $cb): ?>
                     <tr>
                         <td><?= format_date($cb['fecha']) ?></td>
@@ -307,6 +327,15 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
                         <td><?= number_format((int) $cb['kilometraje']) ?></td>
                         <td><?= $cb['rendimiento'] !== null ? number_format((float) $cb['rendimiento'], 2) . ' km/L' : '—' ?></td>
                         <td><?= $cb['costo_por_km'] !== null ? format_money($cb['costo_por_km']) : '—' ?></td>
+                        <td class="table-actions">
+                            <?php if (can('combustible.update')): ?>
+                            <a href="<?= url('combustible/' . $cb['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                            <form action="<?= url('combustible/' . $cb['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar esta carga?">Eliminar</button>
+                            </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
@@ -321,10 +350,10 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
             <?php endif; ?>
             <div class="table-responsive">
                 <table class="table">
-                    <thead><tr><th>Fecha</th><th>Tipo</th><th>Ubicación</th><th>Descripción</th><th>Estado</th></tr></thead>
+                    <thead><tr><th>Fecha</th><th>Tipo</th><th>Ubicación</th><th>Descripción</th><th>Estado</th><th></th></tr></thead>
                     <tbody>
                     <?php if (empty($danios)): ?>
-                    <tr><td colspan="5" class="text-center text-muted">Sin daños reportados</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted">Sin daños reportados</td></tr>
                     <?php else: foreach ($danios as $d): ?>
                     <tr>
                         <td><?= format_datetime($d['created_at']) ?></td>
@@ -332,6 +361,16 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
                         <td><?= e($d['ubicacion']) ?></td>
                         <td><?= e(mb_substr($d['descripcion'], 0, 60)) ?><?= mb_strlen($d['descripcion']) > 60 ? '…' : '' ?></td>
                         <td><a href="<?= url('danios/' . $d['id']) ?>"><span class="badge badge-warning"><?= e(str_replace('_', ' ', $d['estado'])) ?></span></a></td>
+                        <td class="table-actions">
+                            <a href="<?= url('danios/' . $d['id']) ?>" class="btn btn-sm btn-info">Ver</a>
+                            <?php if (can('danios.update')): ?>
+                            <a href="<?= url('danios/' . $d['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                            <form action="<?= url('danios/' . $d['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar este daño?">Eliminar</button>
+                            </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
@@ -356,7 +395,18 @@ $fotoUrl = !empty($fotoRuta) ? url('storage/uploads/' . ltrim((string) $fotoRuta
                         <td><?= number_format((int) $i['kilometraje']) ?></td>
                         <td><span class="badge <?= $i['resultado_general'] === 'aprobada' ? 'badge-success' : ($i['resultado_general'] === 'rechazada' ? 'badge-danger' : 'badge-warning') ?>"><?= e(ucfirst($i['resultado_general'])) ?></span></td>
                         <td><?= (int) ($i['items_malo'] ?? 0) ?></td>
-                        <td><a href="<?= url('inspecciones/' . $i['id']) ?>" class="btn btn-sm btn-info">Ver</a></td>
+                        <td class="table-actions">
+                            <a href="<?= url('inspecciones/' . $i['id']) ?>" class="btn btn-sm btn-info">Ver</a>
+                            <?php if (can('inspecciones.update')): ?>
+                            <a href="<?= url('inspecciones/' . $i['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                            <?php endif; ?>
+                            <?php if (can('inspecciones.delete')): ?>
+                            <form action="<?= url('inspecciones/' . $i['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar esta inspección?">Eliminar</button>
+                            </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                     <?php endforeach; endif; ?>
                     </tbody>

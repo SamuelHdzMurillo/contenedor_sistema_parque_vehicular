@@ -46,7 +46,18 @@ $data = $data ?? [];
                     <td><?= e($c['conductor_nombre'] ?? '—') ?></td>
                     <td><?= $c['km_recorridos'] !== null ? number_format((int) $c['km_recorridos']) : '—' ?></td>
                     <td><span class="badge badge-secondary"><?= e($comEstados[$c['estado']] ?? $c['estado']) ?></span></td>
-                    <td><a href="<?= url('comisiones/' . $c['id']) ?>" class="btn btn-sm btn-info">Ver</a></td>
+                    <td class="table-actions">
+                        <a href="<?= url('comisiones/' . $c['id']) ?>" class="btn btn-sm btn-info">Ver</a>
+                        <?php if (can('comisiones.update')): ?>
+                        <a href="<?= url('comisiones/' . $c['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                        <?php endif; ?>
+                        <?php if (can('comisiones.delete')): ?>
+                        <form action="<?= url('comisiones/' . $c['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar definitivamente la comisión <?= e($c['folio']) ?>? Esta acción no se puede deshacer.">Eliminar</button>
+                        </form>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endforeach; endif; ?>
             </tbody>

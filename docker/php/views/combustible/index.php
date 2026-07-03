@@ -53,7 +53,16 @@ $vehiculos = $vehiculos ?? [];
                         —
                         <?php endif; ?>
                     </td>
-                    <td><a href="<?= url('formatos/combustible/' . $c['id']) ?>" class="btn btn-sm btn-danger" target="_blank">PDF</a></td>
+                    <td class="table-actions">
+                        <?php if (can('combustible.update')): ?>
+                        <a href="<?= url('combustible/' . $c['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                        <form action="<?= url('combustible/' . $c['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar esta carga de combustible? Esta acción no se puede deshacer.">Eliminar</button>
+                        </form>
+                        <?php endif; ?>
+                        <a href="<?= url('formatos/combustible/' . $c['id']) ?>" class="btn btn-sm btn-info" target="_blank">PDF</a>
+                    </td>
                 </tr>
                 <?php endforeach; endif; ?>
             </tbody>

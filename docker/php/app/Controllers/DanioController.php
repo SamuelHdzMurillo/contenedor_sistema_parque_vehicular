@@ -134,4 +134,12 @@ final class DanioController extends BaseController
         flash($error ? 'error' : 'success', $error ?? 'Estado actualizado correctamente.');
         $this->redirect('danios/' . $id);
     }
+
+    public function eliminar(Request $request, string $id): never
+    {
+        $this->validateCsrf($request);
+        $error = $this->danios->eliminar((int) $id);
+        flash($error ? 'error' : 'success', $error ?? 'Daño eliminado correctamente.');
+        $this->redirect($error ? 'danios/' . $id : 'danios');
+    }
 }

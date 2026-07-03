@@ -24,10 +24,16 @@
                     <td><?= number_format((int) ($i['kilometraje'] ?? 0)) ?></td>
                     <td><?= e(combustible_fraccion_etiqueta($i['nivel_combustible'] ?? null)) ?></td>
                     <td><span class="badge <?= ($i['resultado_general'] ?? '') === 'aprobada' ? 'badge-success' : (($i['resultado_general'] ?? '') === 'rechazada' ? 'badge-danger' : 'badge-warning') ?>"><?= e(ucfirst($i['resultado_general'] ?? '')) ?></span></td>
-                    <td>
+                    <td class="table-actions">
                         <a href="<?= url('inspecciones/' . $i['id']) ?>" class="btn btn-sm btn-info">Ver</a>
                         <?php if (can('inspecciones.update')): ?>
                         <a href="<?= url('inspecciones/' . $i['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                        <?php endif; ?>
+                        <?php if (can('inspecciones.delete')): ?>
+                        <form action="<?= url('inspecciones/' . $i['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar esta inspección? Esta acción no se puede deshacer.">Eliminar</button>
+                        </form>
                         <?php endif; ?>
                     </td>
                 </tr>

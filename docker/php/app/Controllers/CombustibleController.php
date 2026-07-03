@@ -51,4 +51,41 @@ final class CombustibleController extends BaseController
             $this->redirect('combustible/create');
         }
     }
+
+    public function edit(Request $request, string $id): never
+    {
+        $data = $this->combustible->getFormDataForEdit((int) $id);
+        if ($data === null) {
+            flash('error', 'Carga de combustible no encontrada.');
+            $this->redirect('combustible');
+        }
+        $this->render('combustible.edit', $data);
+    }
+
+    public function update(Request $request, string $id): never
+    {
+        $this->validateCsrf($request);
+        if (auth_id() === null) {
+            $this->redirect('login');
+        }
+
+        $data = $request->all();
+        $data['archivo_ticket'] = $request->file('archivo_ticket');
+        $error = $this->combustible->update((int) $id, $data);
+        if ($error !== null) {
+            $_SESSION['_old'] = $request->all();
+            flash('error', $error);
+            $this->redirect('combustible/' . $id . '/edit');
+        }
+        flash('success', 'Carga de combustible actualizada correctamente.');
+        $this->redirect('combustible');
+    }
+
+    public function eliminar(Request $request, string $id): never
+    {
+        $this->validateCsrf($request);
+        $error = $this->combustible->eliminar((int) $id);
+        flash($error ? 'error' : 'success', $error ?? 'Carga de combustible eliminada correctamente.');
+        $this->redirect('combustible');
+    }
 }

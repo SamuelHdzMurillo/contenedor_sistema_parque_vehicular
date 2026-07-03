@@ -130,6 +130,16 @@ final class CombustibleRepository extends BaseRepository
         );
     }
 
+    public function getSiguienteCarga(int $vehiculoId, int $afterId): ?array
+    {
+        return $this->fetchOne(
+            'SELECT * FROM combustible_cargas
+             WHERE vehiculo_id = ? AND id > ?
+             ORDER BY fecha ASC, id ASC LIMIT 1',
+            [$vehiculoId, $afterId]
+        );
+    }
+
     public function getUltimaCarga(int $vehiculoId): ?array
     {
         return $this->fetchOne(

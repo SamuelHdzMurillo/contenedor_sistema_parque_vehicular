@@ -12,6 +12,10 @@ $estados = ['reportado','en_evaluacion','en_reparacion','reparado','cerrado_sin_
     <div class="page-actions">
         <?php if (can('danios.update')): ?>
         <a href="<?= url('danios/' . $d['id'] . '/edit') ?>" class="btn btn-primary">Editar datos</a>
+        <form action="<?= url('danios/' . $d['id'] . '/eliminar') ?>" method="post" class="inline-form">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-danger" data-confirm="¿Confirma eliminar este reporte de daño? Esta acción no se puede deshacer.">Eliminar</button>
+        </form>
         <?php endif; ?>
         <a href="<?= url('formatos/danio/' . $d['id']) ?>" class="btn btn-secondary" target="_blank">Descargar PDF / Imprimir</a>
     </div>

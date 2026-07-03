@@ -215,4 +215,29 @@ final class DanioService extends BaseRepository
         AuditService::log('UPDATE', 'danios', $id, $danio, ['estado' => $estado]);
         return null;
     }
+
+    public function eliminar(int $id): ?string
+    {
+        $danio = $this->fetchOne('SELECT * FROM danios WHERE id = ?', [$id]);
+        if ($danio === null) {
+            return 'Registro de daño no encontrado.';
+        }
+
+        try {
+            $fotos = $this->fetchAll('SELECT * FROM danio_fotos WHERE danio_id = ?', [$id]);
+            foreach ($fotos as $foto) {
+                $path = storage_path('uploads/' . ltrim((string) $foto['ruta'], '/'));
+                if (is_file($path)) {
+                    unlink($path);
+                }
+            }
+            $this->execute('DELETE FROM danio_fotos WHERE danio_id = ?', [$id]);
+            $this->execute('DELETE FROM danio_seguimiento WHERE danio_id = ?', [$id]);
+            $this->execute('DELETE FROM danios WHERE id = ?', [$id]);
+            AuditService::log('DELETE', 'danios', $id, $danio, null);
+            return null;
+        } catch (\Throwable $e) {
+            return user_facing_error($e, 'No se pudo eliminar el daño.');
+        }
+    }
 }

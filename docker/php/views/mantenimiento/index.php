@@ -37,7 +37,18 @@
                     <td><?= e($m['proveedor_nombre'] ?? $m['razon_social'] ?? '—') ?></td>
                     <td><?= format_money($m['costo'] ?? 0) ?></td>
                     <td><span class="badge badge-secondary"><?= e(str_replace('_', ' ', $m['estado'])) ?></span></td>
-                    <td><a href="<?= url('mantenimiento/' . $m['id']) ?>" class="btn btn-sm btn-info">Ver</a></td>
+                    <td class="table-actions">
+                        <a href="<?= url('mantenimiento/' . $m['id']) ?>" class="btn btn-sm btn-info">Ver</a>
+                        <?php if (can('mantenimiento.update')): ?>
+                        <a href="<?= url('mantenimiento/' . $m['id'] . '/edit') ?>" class="btn btn-sm btn-secondary">Editar</a>
+                        <?php endif; ?>
+                        <?php if (can('mantenimiento.delete')): ?>
+                        <form action="<?= url('mantenimiento/' . $m['id'] . '/eliminar') ?>" method="post" class="inline-form">
+                            <?= csrf_field() ?>
+                            <button type="submit" class="btn btn-sm btn-danger" data-confirm="¿Confirma eliminar el mantenimiento <?= e($m['folio']) ?>? Esta acción no se puede deshacer.">Eliminar</button>
+                        </form>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endforeach; endif; ?>
             </tbody>

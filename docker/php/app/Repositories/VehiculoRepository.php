@@ -294,10 +294,6 @@ final class VehiculoRepository extends BaseRepository
              FROM alertas WHERE vehiculo_id = ? AND atendida = 0 ORDER BY FIELD(nivel, "rojo", "amarillo", "verde"), created_at DESC',
             [$id]
         );
-        $vehiculo['herramientas'] = $this->fetchAll(
-            'SELECT tipo, estado, fecha_vencimiento, observaciones FROM herramientas_vehiculo WHERE vehiculo_id = ?',
-            [$id]
-        );
         $vehiculo['luces_tablero'] = $this->getLucesTablero($id);
         $vehiculo['luces_tablero_meta'] = $this->getLucesTableroMeta($id);
         $vehiculo['costos'] = $this->fetchOne(
