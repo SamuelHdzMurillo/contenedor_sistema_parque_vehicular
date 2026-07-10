@@ -34,7 +34,13 @@ final class ServicioController extends BaseController
     {
         $this->validateCsrf($request);
         $data = $request->all();
-        $result = $this->servicios->create($data);
+        try {
+            $result = $this->servicios->create($data);
+        } catch (\Throwable $e) {
+            $_SESSION['_old'] = $data;
+            flash('error', user_facing_error($e, 'No se pudo registrar el servicio.'));
+            $this->redirect('catalogos/servicios/create');
+        }
         if (is_string($result)) {
             $_SESSION['_old'] = $data;
             flash('error', $result);

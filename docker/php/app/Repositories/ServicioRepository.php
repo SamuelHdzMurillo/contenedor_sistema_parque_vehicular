@@ -64,9 +64,8 @@ final class ServicioRepository extends BaseRepository
     {
         $this->execute(
             'INSERT INTO alerta_config (
-                tipo, nombre, umbral_verde, umbral_amarillo, umbral_rojo, unidad,
-                umbral_verde_dias, umbral_amarillo_dias, umbral_rojo_dias, activo
-             ) VALUES (?, ?, 0, 0, 0, "km", NULL, NULL, NULL, ?)',
+                tipo, nombre, umbral_verde, umbral_amarillo, umbral_rojo, unidad, activo
+             ) VALUES (?, ?, 0, 0, 0, "km", ?)',
             [
                 $data['tipo'],
                 $data['nombre'],

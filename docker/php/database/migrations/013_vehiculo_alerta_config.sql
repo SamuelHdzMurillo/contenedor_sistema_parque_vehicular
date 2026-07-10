@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS vehiculo_alerta_config (
 ) ENGINE=InnoDB;
 
 ALTER TABLE alerta_config
-    ADD COLUMN IF NOT EXISTS umbral_verde_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_rojo,
-    ADD COLUMN IF NOT EXISTS umbral_amarillo_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_verde_dias,
-    ADD COLUMN IF NOT EXISTS umbral_rojo_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_amarillo_dias;
+    ADD COLUMN umbral_verde_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_rojo,
+    ADD COLUMN umbral_amarillo_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_verde_dias,
+    ADD COLUMN umbral_rojo_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_amarillo_dias;
 
 UPDATE alerta_config SET
     umbral_verde_dias = 365,
@@ -31,6 +31,6 @@ WHERE unidad = 'km' AND umbral_verde_dias IS NULL;
 
 -- Umbrales en días por vehículo (tabla puede existir con esquema previo)
 ALTER TABLE vehiculo_alerta_config
-    ADD COLUMN IF NOT EXISTS umbral_verde_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_rojo,
-    ADD COLUMN IF NOT EXISTS umbral_amarillo_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_verde_dias,
-    ADD COLUMN IF NOT EXISTS umbral_rojo_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_amarillo_dias;
+    ADD COLUMN umbral_verde_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_rojo,
+    ADD COLUMN umbral_amarillo_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_verde_dias,
+    ADD COLUMN umbral_rojo_dias INT UNSIGNED NULL DEFAULT NULL AFTER umbral_rojo_dias;

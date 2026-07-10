@@ -156,6 +156,9 @@ migration_already_effective() {
         010_*)
             table_exists "conductores"
             ;;
+        013_vehiculo_alerta_config.sql)
+            column_exists "alerta_config" "umbral_verde_dias"
+            ;;
         016_mantenimiento_historico.sql)
             column_exists "mantenimientos" "es_historico"
             ;;
@@ -188,6 +191,9 @@ migration_already_effective() {
             ;;
         029_comision_tanque_tipo_gasolina.sql)
             column_exists "comisiones" "tanque_adicional_tipo_gasolina_id"
+            ;;
+        030_alerta_config_dias_columns.sql)
+            column_exists "alerta_config" "umbral_verde_dias"
             ;;
         *)
             return 1
