@@ -19,7 +19,8 @@ DB_USER="${DB_USERNAME:-${DB_USER:-parque_user}}"
 DB_PASS="${DB_PASSWORD:-parque_pass}"
 
 mysql_cmd() {
-    mysql --skip-ssl -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$@"
+    # Forzar utf8mb4 en el cliente evita mojibake (ó → Ã³) al cargar .sql con acentos.
+    mysql --skip-ssl --default-character-set=utf8mb4 -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$@"
 }
 
 wait_for_db() {
