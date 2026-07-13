@@ -265,8 +265,7 @@ $filaCampos = static function (array $campos, callable $campo, int $cols = 3): v
         <?= $renderHerramientasPdf($c['herramientas_salida'] ?? []) ?>
         <?php pdf_render_firmas([
             ['label' => 'Firma del conductor', 'nombre' => $c['conductor_nombre'] ?? ''],
-            ['label' => 'Firma responsable vehículo', 'nombre' => $c['responsable_nombre'] ?? ''],
-            ['label' => 'Autoriza salida (supervisor)', 'nombre' => ''],
+            ['label' => 'Autoriza salida', 'nombre' => ''],
         ]); ?>
         <?php if ($esCompleto): ?>
         <div class="leyenda"><?= e($leyendaEntrega) ?></div>
