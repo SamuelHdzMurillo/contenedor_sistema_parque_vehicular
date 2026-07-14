@@ -26,6 +26,7 @@ final class MantenimientoController extends BaseController
 
     public function create(Request $request): never
     {
+        discard_old_if_vehiculo_mismatch();
         $this->render('mantenimiento.create', $this->mantenimientos->getFormData());
     }
 
@@ -38,18 +39,21 @@ final class MantenimientoController extends BaseController
         }
 
         try {
-            $data = $request->all();
+            $data = $request->post();
             $data['responsable_id'] = $data['responsable_id'] ?? $userId;
             $data['es_historico'] = !empty($data['es_historico']) ? 1 : 0;
             $data['archivo_factura'] = $request->file('archivo_factura');
             $data['archivo_xml'] = $request->file('archivo_xml');
             $id = $this->mantenimientos->create($data, $userId);
+            clear_old();
             flash('success', 'Mantenimiento registrado correctamente.');
             $this->redirect('mantenimiento/' . $id);
         } catch (\RuntimeException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->post());
             flash('error', $e->getMessage());
-            $this->redirect('mantenimiento/create');
+            $vehiculoId = (string) ($request->post()['vehiculo_id'] ?? '');
+            $qs = $vehiculoId !== '' ? '?vehiculo_id=' . rawurlencode($vehiculoId) : '';
+            $this->redirect('mantenimiento/create' . $qs);
         }
     }
 
@@ -77,7 +81,7 @@ final class MantenimientoController extends BaseController
     {
         $this->validateCsrf($request);
         try {
-            $data = $request->all();
+            $data = $request->post();
             $data['es_historico'] = !empty($data['es_historico']) ? 1 : 0;
             $data['archivo_factura'] = $request->file('archivo_factura');
             $data['archivo_xml'] = $request->file('archivo_xml');
@@ -85,10 +89,11 @@ final class MantenimientoController extends BaseController
                 flash('error', 'No se pudo actualizar el mantenimiento.');
                 $this->redirect('mantenimiento/' . $id . '/edit');
             }
+            clear_old();
             flash('success', 'Mantenimiento actualizado correctamente.');
             $this->redirect('mantenimiento/' . $id);
         } catch (\RuntimeException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->post());
             flash('error', $e->getMessage());
             $this->redirect('mantenimiento/' . $id . '/edit');
         }

@@ -22,6 +22,7 @@ final class Session
             'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
         ]);
         session_start();
+        self::ageOldInput();
     }
 
     public static function get(string $key, mixed $default = null): mixed
@@ -59,13 +60,25 @@ final class Session
         session_destroy();
     }
 
+    /** Input del formulario disponible solo en el siguiente request (como flash). */
     public static function flashOld(array $data): void
     {
-        $_SESSION['_old'] = $data;
+        $_SESSION['_old_flash'] = $data;
     }
 
     public static function clearOld(): void
     {
+        unset($_SESSION['_old'], $_SESSION['_old_flash']);
+    }
+
+    private static function ageOldInput(): void
+    {
+        if (array_key_exists('_old_flash', $_SESSION)) {
+            $_SESSION['_old'] = $_SESSION['_old_flash'];
+            unset($_SESSION['_old_flash']);
+            return;
+        }
+
         unset($_SESSION['_old']);
     }
 }

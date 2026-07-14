@@ -53,16 +53,16 @@ final class VehiculoController extends BaseController
             flash('success', 'Vehículo registrado correctamente.');
             $this->redirect('vehiculos/' . $id);
         } catch (ValidationException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             $_SESSION['_field_errors'] = $e->getFieldErrors();
             flash('errors', $e->getErrors());
             $this->redirect('vehiculos/create');
         } catch (RuntimeException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             flash('error', $e->getMessage());
             $this->redirect('vehiculos/create');
         } catch (PDOException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             flash('error', user_facing_error($e, 'Error de base de datos al registrar el vehículo.'));
             $this->redirect('vehiculos/create');
         }
@@ -130,12 +130,12 @@ final class VehiculoController extends BaseController
             flash('success', 'Vehículo actualizado correctamente.');
             $this->redirect('vehiculos/' . $id);
         } catch (ValidationException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             $_SESSION['_field_errors'] = $e->getFieldErrors();
             flash('errors', $e->getErrors());
             $this->redirect('vehiculos/' . $id . '/edit');
         } catch (PDOException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             flash('error', user_facing_error($e, 'Error de base de datos al actualizar el vehículo.'));
             $this->redirect('vehiculos/' . $id . '/edit');
         }

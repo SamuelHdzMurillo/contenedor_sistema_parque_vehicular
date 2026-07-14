@@ -38,7 +38,7 @@ final class PlantelController extends BaseController
         $data = $request->all();
         $result = $this->planteles->create($data);
         if (is_string($result)) {
-            $_SESSION['_old'] = $data;
+            flash_old($data);
             flash('error', $result);
             $this->redirect('catalogos/planteles/create');
         }

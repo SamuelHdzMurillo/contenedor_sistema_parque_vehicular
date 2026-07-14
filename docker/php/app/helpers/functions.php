@@ -182,6 +182,38 @@ function old(string $key, mixed $default = ''): mixed
     return $_SESSION['_old'][$key] ?? $default;
 }
 
+/** Guarda input del formulario para el siguiente request (un solo uso). */
+function flash_old(array $data): void
+{
+    \App\Core\Session::flashOld($data);
+}
+
+function clear_old(): void
+{
+    \App\Core\Session::clearOld();
+}
+
+/**
+ * Evita reutilizar old() de otro vehículo cuando el create llega con ?vehiculo_id=.
+ * Si el GET apunta a un vehículo distinto al de old('vehiculo_id'), limpia _old.
+ */
+function discard_old_if_vehiculo_mismatch(): void
+{
+    $getId = $_GET['vehiculo_id'] ?? null;
+    if ($getId === null || $getId === '') {
+        return;
+    }
+
+    $oldId = $_SESSION['_old']['vehiculo_id'] ?? null;
+    if ($oldId === null || $oldId === '') {
+        return;
+    }
+
+    if ((string) $getId !== (string) $oldId) {
+        clear_old();
+    }
+}
+
 /** Como old(), pero ignora cadenas vacías (útil para selects que no deben quedar en blanco tras un error). */
 function old_nonempty(string $key, mixed $default = null): mixed
 {

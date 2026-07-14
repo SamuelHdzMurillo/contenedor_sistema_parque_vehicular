@@ -37,12 +37,12 @@ final class ServicioController extends BaseController
         try {
             $result = $this->servicios->create($data);
         } catch (\Throwable $e) {
-            $_SESSION['_old'] = $data;
+            flash_old($data);
             flash('error', user_facing_error($e, 'No se pudo registrar el servicio.'));
             $this->redirect('catalogos/servicios/create');
         }
         if (is_string($result)) {
-            $_SESSION['_old'] = $data;
+            flash_old($data);
             flash('error', $result);
             $this->redirect('catalogos/servicios/create');
         }

@@ -199,7 +199,7 @@ final class MantenimientoRepository extends BaseRepository
     {
         return $this->execute(
             'UPDATE mantenimientos SET
-                folio = ?, tipo = ?, servicio = ?, fecha = ?, kilometraje = ?, es_historico = ?, proveedor_id = ?, descripcion = ?, costo = ?,
+                folio = ?, vehiculo_id = ?, tipo = ?, servicio = ?, fecha = ?, kilometraje = ?, es_historico = ?, proveedor_id = ?, descripcion = ?, costo = ?,
                 factura_folio = ?, factura_uuid = ?, factura_fecha = ?,
                 factura_subtotal = ?, factura_iva = ?, factura_total = ?,
                 factura_ruta = ?, xml_ruta = ?, pdf_ruta = ?, responsable_id = ?,
@@ -207,6 +207,7 @@ final class MantenimientoRepository extends BaseRepository
              WHERE id = ?',
             [
                 $data['folio'],
+                (int) $data['vehiculo_id'],
                 $data['tipo'],
                 $this->nullableStr($data['servicio'] ?? null),
                 $data['fecha'],

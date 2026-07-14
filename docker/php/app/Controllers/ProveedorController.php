@@ -40,14 +40,14 @@ final class ProveedorController extends BaseController
         $this->validateCsrf($request);
         $data = $request->all();
         if (trim((string) ($data['razon_social'] ?? '')) === '') {
-            $_SESSION['_old'] = $data;
+            flash_old($data);
             flash('error', 'La razón social es obligatoria.');
             $this->redirect('proveedores/create');
         }
 
         $result = $this->proveedores->create($data);
         if (is_string($result)) {
-            $_SESSION['_old'] = $data;
+            flash_old($data);
             flash('error', $result);
             $this->redirect('proveedores/create');
         }

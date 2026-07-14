@@ -34,7 +34,7 @@ final class UsuarioController extends BaseController
         $this->validateCsrf($request);
         $error = $this->usuarios->create($request->all());
         if ($error !== null) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             flash('error', $error);
             $this->redirect('usuarios/create');
         }

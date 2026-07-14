@@ -38,7 +38,7 @@ final class TipoGasolinaController extends BaseController
         $data = $request->all();
         $result = $this->tipos->create($data);
         if (is_string($result)) {
-            $_SESSION['_old'] = $data;
+            flash_old($data);
             flash('error', $result);
             $this->redirect('catalogos/tipos-gasolina/create');
         }

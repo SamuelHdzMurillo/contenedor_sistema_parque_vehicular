@@ -46,11 +46,11 @@ final class ComisionController extends BaseController
         try {
             $id = $this->comisiones->create($data, $userId);
         } catch (\InvalidArgumentException $e) {
-            $_SESSION['_old'] = $this->filterOldInput($data);
+            flash_old($this->filterOldInput($data));
             flash('error', $e->getMessage());
             $this->redirect('comisiones/create');
         }
-        unset($_SESSION['_old']);
+        clear_old();
         flash('success', 'Comisión registrada correctamente.');
         $this->redirect('comisiones/' . $id);
     }
@@ -114,11 +114,11 @@ final class ComisionController extends BaseController
             $this->redirect('comisiones/' . $id . '/edit');
         }
         if ($error !== null) {
-            $_SESSION['_old'] = $this->filterOldInput($request->post());
+            flash_old($this->filterOldInput($request->post()));
             flash('error', $error);
             $this->redirect('comisiones/' . $id . '/edit');
         }
-        unset($_SESSION['_old']);
+        clear_old();
         flash('success', 'Comisión actualizada correctamente.');
         $this->redirect('comisiones/' . $id);
     }
@@ -136,10 +136,10 @@ final class ComisionController extends BaseController
         $this->validateCsrf($request);
         $error = $this->comisiones->finalizar((int) $id, $request->post());
         if ($error !== null) {
-            $_SESSION['_old'] = $this->filterOldInput($request->post());
+            flash_old($this->filterOldInput($request->post()));
             flash('error', $error);
         } else {
-            unset($_SESSION['_old']);
+            clear_old();
             flash('success', 'Comisión finalizada correctamente.');
         }
         $this->redirect('comisiones/' . $id . '#regreso');

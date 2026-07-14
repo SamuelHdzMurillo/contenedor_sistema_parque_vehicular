@@ -7,6 +7,20 @@ $responsables = $responsables ?? [];
 $areas = $areas ?? [];
 $tipos = $tipos ?? [];
 $servicios = $servicios ?? [];
+$preVehiculo = old('vehiculo_id', $m['vehiculo_id'] ?? '');
+$currentVehiculoId = (int) ($m['vehiculo_id'] ?? 0);
+$vehiculoIds = array_map('intval', array_column($vehiculos, 'id'));
+if ($currentVehiculoId > 0 && !in_array($currentVehiculoId, $vehiculoIds, true)) {
+    array_unshift($vehiculos, [
+        'id' => $currentVehiculoId,
+        'numero_economico' => $m['numero_economico'] ?? '',
+        'placas' => $m['placas'] ?? '',
+        'marca' => $m['marca'] ?? '',
+        'modelo' => $m['modelo'] ?? '',
+        'estado' => $m['estado_vehiculo'] ?? '',
+        'kilometraje_actual' => $m['kilometraje_actual'] ?? 0,
+    ]);
+}
 $serviciosSel = old('servicios', $m['servicios'] ?? []);
 if (!is_array($serviciosSel)) {
     $serviciosSel = $serviciosSel !== '' ? [(string) $serviciosSel] : [];
@@ -56,10 +70,19 @@ if ($oldIntervalos === []) {
             <h2 class="mantenimiento-form-section-title">Datos generales</h2>
             <div class="form-row form-row--2">
                 <div class="form-group mb-0">
+                    <label class="form-label" for="vehiculo_id">Vehículo <span class="required">*</span></label>
+                    <select id="vehiculo_id" name="vehiculo_id" class="form-select" required data-km-source>
+                        <option value="">Seleccione…</option>
+                        <?php foreach ($vehiculos as $v): ?>
+                        <option value="<?= (int) $v['id'] ?>" data-km="<?= (int) ($v['kilometraje_actual'] ?? 0) ?>" <?= (string) $preVehiculo === (string) $v['id'] ? 'selected' : '' ?>><?= e(catalogo_vehiculo_label($v)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-group mb-0">
                     <label class="form-label" for="tipo">Tipo</label>
                     <select id="tipo" name="tipo" class="form-select" required data-tipo-mantenimiento>
                         <?php foreach ($tipos as $t): ?>
-                        <option value="<?= e($t) ?>" <?= ($m['tipo'] ?? '') === $t ? 'selected' : '' ?>><?= e(ucfirst($t)) ?></option>
+                        <option value="<?= e($t) ?>" <?= old('tipo', $m['tipo'] ?? '') === $t ? 'selected' : '' ?>><?= e(ucfirst($t)) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -93,12 +116,12 @@ if ($oldIntervalos === []) {
             <div class="form-row form-row--2">
                 <div class="form-group">
                     <label class="form-label" for="fecha">Fecha</label>
-                    <input type="date" id="fecha" name="fecha" class="form-control" value="<?= e($m['fecha'] ?? '') ?>" required>
+                    <input type="date" id="fecha" name="fecha" class="form-control" value="<?= e((string) old('fecha', $m['fecha'] ?? '')) ?>" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="kilometraje">Kilometraje</label>
-                    <input type="number" id="kilometraje" name="kilometraje" class="form-control" value="<?= e((string) old('kilometraje', (string) ($m['kilometraje'] ?? ''))) ?>" required min="0">
-                    <small class="form-hint text-muted" data-km-hint data-km-value="<?= (int) ($m['kilometraje_actual'] ?? 0) ?>" <?= !empty($m['es_historico']) ? 'data-km-historic' : '' ?>></small>
+                    <input type="number" id="kilometraje" name="kilometraje" class="form-control" value="<?= e((string) old('kilometraje', (string) ($m['kilometraje'] ?? ''))) ?>" required min="0" data-km-target>
+                    <small class="form-hint text-muted" data-km-hint>Seleccione un vehículo para ver el kilometraje actual.</small>
                 </div>
             </div>
             <div class="form-historico-note mb-2">
@@ -112,7 +135,7 @@ if ($oldIntervalos === []) {
             </div>
             <div class="form-group mb-0">
                 <label class="form-label" for="descripcion">Descripción</label>
-                <textarea id="descripcion" name="descripcion" class="form-textarea" rows="4" required><?= e($m['descripcion'] ?? '') ?></textarea>
+                <textarea id="descripcion" name="descripcion" class="form-textarea" rows="4" required><?= e((string) old('descripcion', $m['descripcion'] ?? '')) ?></textarea>
             </div>
         </section>
 
@@ -130,7 +153,7 @@ if ($oldIntervalos === []) {
                                 data-telefono="<?= e($p['telefono'] ?? '') ?>"
                                 data-email="<?= e($p['email'] ?? '') ?>"
                                 data-direccion="<?= e($p['direccion'] ?? '') ?>"
-                                <?= (int) ($m['proveedor_id'] ?? 0) === (int) $p['id'] ? 'selected' : '' ?>><?= e($p['razon_social']) ?></option>
+                                <?= (string) old('proveedor_id', (string) ($m['proveedor_id'] ?? '')) === (string) $p['id'] ? 'selected' : '' ?>><?= e($p['razon_social']) ?></option>
                             <?php endforeach; ?>
                         </select>
                         <?php if (can('proveedores.create')): ?>
@@ -140,7 +163,7 @@ if ($oldIntervalos === []) {
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="costo">Costo</label>
-                    <input type="number" id="costo" name="costo" class="form-control" step="0.01" value="<?= e((string) ($m['costo'] ?? '0')) ?>">
+                    <input type="number" id="costo" name="costo" class="form-control" step="0.01" value="<?= e((string) old('costo', (string) ($m['costo'] ?? '0'))) ?>">
                 </div>
             </div>
             <div id="proveedor-datos" class="alert alert-info" style="display:none;">

@@ -29,13 +29,13 @@ final class AuthController extends BaseController
         $remember = (bool) $request->input('remember');
 
         if ($email === '' || $password === '') {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             flash('error', 'Ingrese correo y contraseña.');
             $this->redirect('login');
         }
 
         if (!$this->auth->attempt($email, $password, $remember)) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             flash('error', 'Credenciales incorrectas o cuenta bloqueada.');
             $this->redirect('login');
         }

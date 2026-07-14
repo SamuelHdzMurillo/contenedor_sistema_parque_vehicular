@@ -21,6 +21,9 @@ $responsableActual = old('responsable_id', auth_id());
 $puedeAgregarResponsable = can('usuarios.create') || can('mantenimiento.create');
 $puedeAgregarServicio = !empty($puede_agregar_servicio) || can('mantenimiento.create');
 $returnToServicio = 'mantenimiento/create';
+if ($preVehiculo !== null && $preVehiculo !== '') {
+    $returnToServicio .= '?vehiculo_id=' . rawurlencode((string) $preVehiculo);
+}
 $oldIntervalos = old('intervalos', []);
 if (!is_array($oldIntervalos)) {
     $oldIntervalos = [];

@@ -23,6 +23,7 @@ final class InspeccionController extends BaseController
 
     public function create(Request $request): never
     {
+        discard_old_if_vehiculo_mismatch();
         $vehiculoId = $request->input('vehiculo_id');
         $presetId = (is_string($vehiculoId) && $vehiculoId !== '' && ctype_digit($vehiculoId))
             ? (int) $vehiculoId
@@ -39,17 +40,18 @@ final class InspeccionController extends BaseController
         }
 
         try {
-            $data = $request->all();
+            $data = $request->post();
             $data['es_historico'] = !empty($data['es_historico']) ? 1 : 0;
             $id = $this->inspecciones->create($data, $userId);
+            clear_old();
             flash('success', 'Inspección registrada correctamente.');
             $this->redirect('inspecciones/' . $id);
         } catch (\RuntimeException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->post());
             flash('error', $e->getMessage());
             $this->redirect('inspecciones/create');
         } catch (\InvalidArgumentException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->post());
             flash('error', $e->getMessage());
             $this->redirect('inspecciones/create');
         }
@@ -84,21 +86,22 @@ final class InspeccionController extends BaseController
         }
 
         try {
-            $data = $request->all();
+            $data = $request->post();
             $data['es_historico'] = !empty($data['es_historico']) ? 1 : 0;
             $error = $this->inspecciones->update((int) $id, $data, $userId);
             if ($error !== null) {
                 flash('error', $error);
                 $this->redirect('inspecciones/' . $id . '/edit');
             }
+            clear_old();
             flash('success', 'Inspección actualizada correctamente.');
             $this->redirect('inspecciones/' . $id);
         } catch (\RuntimeException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->post());
             flash('error', $e->getMessage());
             $this->redirect('inspecciones/' . $id . '/edit');
         } catch (\InvalidArgumentException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->post());
             flash('error', $e->getMessage());
             $this->redirect('inspecciones/' . $id . '/edit');
         }

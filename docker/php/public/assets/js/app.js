@@ -605,7 +605,7 @@
                 return option.getAttribute('data-km') || '0';
             }
 
-            function apply() {
+            function apply(forceFill) {
                 const km = vehiculoKm();
                 if (km === null) {
                     return;
@@ -619,7 +619,7 @@
                         minKm = Math.max(minKm, salidaEl ? Number(salidaEl.value || 0) : 0);
                     }
                     target.min = String(minKm);
-                    if (!historico && mode === 'fill' && (!target.value || Number(target.value) < Number(km))) {
+                    if (!historico && mode === 'fill' && (forceFill || !target.value || Number(target.value) < Number(km))) {
                         target.value = km;
                     }
                     const hint = findKmHint(target);
@@ -629,17 +629,17 @@
                 });
             }
 
-            source.addEventListener('change', apply);
+            source.addEventListener('change', function () { apply(true); });
             const historicoToggle = form.querySelector('[data-km-historic-toggle]');
             if (historicoToggle) {
-                historicoToggle.addEventListener('change', apply);
+                historicoToggle.addEventListener('change', function () { apply(false); });
             }
             const salidaEl = form.querySelector('#km_salida') || form.querySelector('[name="km_salida"]');
             if (salidaEl) {
-                salidaEl.addEventListener('input', apply);
-                salidaEl.addEventListener('change', apply);
+                salidaEl.addEventListener('input', function () { apply(false); });
+                salidaEl.addEventListener('change', function () { apply(false); });
             }
-            apply();
+            apply(false);
         });
 
         document.querySelectorAll('[data-km-hint][data-km-value]').forEach(function (hint) {

@@ -39,7 +39,7 @@ final class AreaController extends BaseController
         $data = $request->all();
         $result = $this->areas->create($data);
         if (is_string($result)) {
-            $_SESSION['_old'] = $data;
+            flash_old($data);
             flash('error', $result);
             $this->redirect('catalogos/areas/create');
         }

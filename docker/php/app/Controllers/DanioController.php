@@ -109,7 +109,7 @@ final class DanioController extends BaseController
 
         $error = $this->danios->update((int) $id, $request->all());
         if ($error !== null) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             flash('error', $error);
             $this->redirect('danios/' . $id . '/edit');
         }

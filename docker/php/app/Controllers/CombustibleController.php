@@ -25,6 +25,7 @@ final class CombustibleController extends BaseController
 
     public function create(Request $request): never
     {
+        discard_old_if_vehiculo_mismatch();
         $vehiculoId = $request->input('vehiculo_id');
         $this->render('combustible.create', $this->combustible->getFormData(
             is_numeric($vehiculoId) ? (int) $vehiculoId : null
@@ -40,13 +41,14 @@ final class CombustibleController extends BaseController
         }
 
         try {
-            $data = $request->all();
+            $data = $request->post();
             $data['archivo_ticket'] = $request->file('archivo_ticket');
             $this->combustible->create($data, $userId);
+            clear_old();
             flash('success', 'Carga de combustible registrada correctamente.');
             $this->redirect('combustible');
         } catch (RuntimeException $e) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->post());
             flash('error', $e->getMessage());
             $this->redirect('combustible/create');
         }
@@ -73,7 +75,7 @@ final class CombustibleController extends BaseController
         $data['archivo_ticket'] = $request->file('archivo_ticket');
         $error = $this->combustible->update((int) $id, $data);
         if ($error !== null) {
-            $_SESSION['_old'] = $request->all();
+            flash_old($request->all());
             flash('error', $error);
             $this->redirect('combustible/' . $id . '/edit');
         }
