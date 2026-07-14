@@ -7,7 +7,6 @@ $areas = $areas ?? [];
 $planteles = $planteles ?? [];
 $tipos = $tipos ?? [];
 $servicios = $servicios ?? [];
-$folioSugerido = (string) ($folio_sugerido ?? '');
 $puedeAgregarArea = can('catalogos.create');
 $preVehiculo = $_GET['vehiculo_id'] ?? old('vehiculo_id');
 $preServicio = $_GET['servicio'] ?? old('servicio');
@@ -39,15 +38,7 @@ if (!is_array($oldIntervalos)) {
 
         <section class="mantenimiento-form-section">
             <h2 class="mantenimiento-form-section-title">Datos generales</h2>
-            <?php if ($folioSugerido !== ''): ?>
-            <?php App\Core\View::component('folio-input', [
-                'id' => 'folio',
-                'tipo' => 'MNT',
-                'pad' => 3,
-                'sugerido' => $folioSugerido,
-                'label' => 'Folio de servicio',
-            ]); ?>
-            <?php endif; ?>
+            <p class="form-hint text-muted mb-2">El folio de servicio se asignará automáticamente al guardar.</p>
             <div class="form-row form-row--2">
                 <div class="form-group mb-0">
                     <label class="form-label" for="vehiculo_id">Vehículo <span class="required">*</span></label>

@@ -39,7 +39,6 @@ final class InspeccionService
     public function getFormDataForCreate(?int $vehiculoId = null): array
     {
         $data = $this->getFormData();
-        $data['folio_sugerido'] = $this->repo->generateFolio();
         if ($vehiculoId !== null && $vehiculoId > 0) {
             $data['vehiculo_luces_preset'] = $this->vehiculos->getLucesTablero($vehiculoId);
         }
@@ -111,7 +110,7 @@ final class InspeccionService
             $data['firma_digital'] = FileUploader::saveBase64Signature((string) $data['firma_data'], 'firmas/inspecciones');
         }
         $data['resultado_general'] = $this->calcularResultadoGeneral($items);
-        $data['folio'] = $this->resolveFolio($data['folio'] ?? null);
+        $data['folio'] = $this->repo->generateFolio();
         $data['nivel_combustible'] = $this->parseNivelCombustible($data);
         $id = $this->repo->createWithItems($data, $items, $lucesTablero);
         if (empty($data['es_historico'])) {
@@ -147,7 +146,7 @@ final class InspeccionService
             }
 
             $data['resultado_general'] = $this->calcularResultadoGeneral($items);
-            $data['folio'] = $this->resolveFolio($data['folio'] ?? $before['folio'], $id);
+            $data['folio'] = $before['folio'];
             $data['nivel_combustible'] = $this->parseNivelCombustible($data);
 
             $wasHistoric = !empty($before['es_historico']);
@@ -330,26 +329,5 @@ final class InspeccionService
         if (is_file($path)) {
             @unlink($path);
         }
-    }
-
-    private function resolveFolio(?string $input, ?int $excludeId = null): string
-    {
-        $folio = trim((string) ($input ?? ''));
-        if ($folio === '') {
-            return $this->repo->generateFolio();
-        }
-        if (!preg_match('/^INS-\d{4}-\d+$/i', $folio)) {
-            throw new \RuntimeException(
-                'El folio debe tener el formato INS-AAAA-NNNN (ejemplo: INS-2026-0001).'
-            );
-        }
-        if (preg_match('/^INS-(\d{4})-(\d+)$/i', $folio, $m)) {
-            $folio = sprintf('INS-%s-%04d', $m[1], (int) $m[2]);
-        }
-        if ($this->repo->folioExists($folio, $excludeId)) {
-            throw new \RuntimeException('El folio "' . $folio . '" ya está registrado. Elija otro.');
-        }
-
-        return $folio;
     }
 }

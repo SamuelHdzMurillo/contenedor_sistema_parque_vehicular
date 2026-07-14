@@ -5,7 +5,6 @@ $areas = $areas ?? [];
 $planteles = $planteles ?? [];
 $conductores = $conductores ?? [];
 $usuarios = $usuarios ?? [];
-$folioSugerido = (string) ($folio_sugerido ?? '');
 $preVehiculo = $_GET['vehiculo_id'] ?? old('vehiculo_id');
 $respRegresoSeleccionado = 0;
 $nombreRegreso = trim((string) old('responsable_regreso_nombre', ''));
@@ -83,15 +82,7 @@ if ($herramientasSalida === [] && !empty($vehiculo_herramientas_preset) && is_ar
     <div class="card mb-2">
         <div class="card-header"><h3>Datos del viaje</h3></div>
         <div class="card-body">
-            <?php if ($folioSugerido !== ''): ?>
-            <?php App\Core\View::component('folio-input', [
-                'id' => 'folio',
-                'tipo' => 'COM',
-                'pad' => 4,
-                'sugerido' => $folioSugerido,
-                'label' => 'Folio de comisión',
-            ]); ?>
-            <?php endif; ?>
+            <p class="form-hint text-muted mb-2">El folio de comisión se asignará automáticamente al guardar.</p>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label" for="vehiculo_id">Vehículo <span class="required">*</span></label>

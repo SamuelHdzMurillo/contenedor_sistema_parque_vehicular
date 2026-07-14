@@ -54,15 +54,6 @@ if ($oldIntervalos === []) {
 
         <section class="mantenimiento-form-section">
             <h2 class="mantenimiento-form-section-title">Datos generales</h2>
-            <?php App\Core\View::component('folio-input', [
-                'id' => 'folio',
-                'tipo' => 'MNT',
-                'pad' => 3,
-                'sugerido' => (string) ($m['folio'] ?? ''),
-                'label' => 'Folio de servicio',
-                'required' => true,
-                'hint' => 'Formato MNT-AAAA-NNN. Debe ser único en el sistema.',
-            ]); ?>
             <div class="form-row form-row--2">
                 <div class="form-group mb-0">
                     <label class="form-label" for="tipo">Tipo</label>

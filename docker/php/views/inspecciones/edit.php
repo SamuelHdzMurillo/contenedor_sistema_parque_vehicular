@@ -34,15 +34,6 @@ $esHistorico = old('es_historico', !empty($i['es_historico']));
     <?= csrf_field() ?>
     <div class="card mb-2">
         <div class="card-body">
-            <?php App\Core\View::component('folio-input', [
-                'id' => 'folio',
-                'tipo' => 'INS',
-                'pad' => 4,
-                'sugerido' => (string) ($i['folio'] ?? ''),
-                'label' => 'Folio de inspección',
-                'required' => true,
-                'hint' => 'Formato INS-AAAA-NNNN. Debe ser único en el sistema.',
-            ]); ?>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label" for="vehiculo_id">Vehículo <span class="required">*</span></label>

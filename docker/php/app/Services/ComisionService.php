@@ -44,7 +44,6 @@ final class ComisionService
             'nivel_opciones' => ComisionRepository::NIVEL_OPCIONES,
             'herramientas_catalogo' => ComisionRepository::HERRAMIENTAS,
             'tipos_gasolina' => $this->catalogos->getTiposGasolina(),
-            'folio_sugerido' => $this->repo->generateFolio(),
         ];
     }
 
@@ -126,7 +125,7 @@ final class ComisionService
         $data = $this->normalizeCombustiblePostKeys($data);
         $data = $this->coalesceCombustiblePost($data, 'combustible_salida', 100.0);
         $data['combustible_salida'] = $this->resolveCombustiblePercent($data, 'combustible_salida', 100.0);
-        $data['folio'] = $this->resolveFolio($data['folio'] ?? null);
+        $data['folio'] = $this->repo->generateFolio();
         $data['estado'] = 'borrador';
         $id = $this->repo->create($data);
         $lucesSalida = $this->parseLuces($data, 'luces_salida');
@@ -819,26 +818,6 @@ final class ComisionService
         } catch (\Throwable $e) {
             return user_facing_error($e, 'No se pudo cancelar la comisión.');
         }
-    }
-
-    private function resolveFolio(?string $input): string
-    {
-        $folio = trim((string) ($input ?? ''));
-        if ($folio === '') {
-            return $this->repo->generateFolio();
-        }
-        if (!preg_match('/^COM-\d{4}-\d+$/i', $folio)) {
-            throw new \InvalidArgumentException(
-                'El folio debe tener el formato COM-AAAA-NNNN (ejemplo: COM-2026-0001).'
-            );
-        }
-        if (preg_match('/^COM-(\d{4})-(\d+)$/i', $folio, $m)) {
-            $folio = sprintf('COM-%s-%04d', $m[1], (int) $m[2]);
-        }
-        if ($this->repo->folioExists($folio)) {
-            throw new \InvalidArgumentException('El folio "' . $folio . '" ya está registrado. Elija otro.');
-        }
-        return $folio;
     }
 
     private function validateInicio(int $vehiculoId, int $kmSalida, ?int $excludeId = null): void
