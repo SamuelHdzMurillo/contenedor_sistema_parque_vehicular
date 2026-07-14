@@ -293,11 +293,13 @@ final class ComisionRepository extends BaseRepository
         $rows = $this->fetchAll(
             "SELECT c.id, c.folio, c.fecha, c.destino, c.estado, c.km_recorridos, c.rendimiento,
                     v.numero_economico,
+                    COALESCE(NULLIF(TRIM(c.conductor_nombre), ''), cond.nombre) AS conductor_nombre,
                     CONCAT(a.nombre, IF(p.clave IS NOT NULL, CONCAT(' - ', p.clave), '')) AS area_nombre
              FROM comisiones c
              JOIN vehiculos v ON v.id = c.vehiculo_id
              JOIN areas a ON a.id = c.area_solicitante_id
              LEFT JOIN planteles p ON p.id = a.plantel_id
+             LEFT JOIN conductores cond ON cond.id = c.conductor_id
              {$where}
              ORDER BY c.fecha DESC, c.id DESC
              LIMIT ? OFFSET ?",
