@@ -91,8 +91,9 @@ $parteLabel = match ($parte) {
 $pdfTitle = 'Orden de Comisión Vehicular' . $parteLabel;
 $pdfSubtitle = $c ? ('Número de oficio de comisión: ' . ($c['folio'] ?? '')) : 'Formato en blanco — Salida y regreso';
 
-$leyendaEntrega = 'El vehículo debe entregarse en las mismas condiciones físicas y mecánicas en que fue recibido al término de la comisión en el edificio de Dirección General de CECyTE BCS. '
-    . 'De no ser así, el responsable asignado se hará cargo de los daños, faltantes o desperfectos ocasionados.';
+$leyendaEntrega = 'El responsable del vehículo es el conductor asignado a la comisión. '
+    . 'El vehículo debe entregarse en las mismas condiciones físicas y mecánicas en que fue recibido al término de la comisión en el edificio de Dirección General de CECyTE BCS. '
+    . 'De no ser así, el conductor asignado se hará cargo de los daños, faltantes o desperfectos ocasionados.';
 
 ob_start();
 ?>
@@ -209,7 +210,7 @@ $filaCampos = static function (array $campos, callable $campo, int $cols = 3): v
             ['Placas', pdf_val($c['placas'] ?? null)],
             ['Estado', pdf_val(isset($c['estado']) ? ucfirst(str_replace('_', ' ', $c['estado'])) : null)],
             ['Área que solicita el vehículo', pdf_val($c['area_solicitante_nombre'] ?? null)],
-            ['Responsable del vehículo', pdf_val($c['responsable_nombre'] ?? null)],
+            ['Responsable del vehículo (conductor asignado)', pdf_val($c['conductor_nombre'] ?? null)],
         ], $campo); ?>
         <table class="grid two-col" style="margin-top:4px;">
             <tr>
@@ -281,7 +282,7 @@ $filaCampos = static function (array $campos, callable $campo, int $cols = 3): v
             <span><strong>Número de oficio de comisión:</strong> <?= e(pdf_val($c['folio'] ?? null)) ?: '—' ?></span>
             <span><strong>Vehículo:</strong> <?= e(pdf_val($c['numero_economico'] ?? null)) ?: '—' ?></span>
             <span><strong>Placas:</strong> <?= e(pdf_val($c['placas'] ?? null)) ?: '—' ?></span>
-            <span><strong>Conductor:</strong> <?= e(pdf_val($c['conductor_nombre'] ?? null)) ?: '—' ?></span>
+            <span><strong>Responsable del vehículo (conductor asignado):</strong> <?= e(pdf_val($c['conductor_nombre'] ?? null)) ?: '—' ?></span>
             <span><strong>Destino:</strong> <?= e(pdf_val($c['destino'] ?? null)) ?: '—' ?></span>
         </div>
         <?php elseif (!$mostrarSalida): ?>
@@ -293,6 +294,7 @@ $filaCampos = static function (array $campos, callable $campo, int $cols = 3): v
                 ['Vencimiento revista / tarjeta de circulación', $formatVencimientoRevistaTarjeta($vencimientosRevistaTarjeta)],
                 ['Identificador', pdf_val($c['numero_economico'] ?? null)],
                 ['Placas', pdf_val($c['placas'] ?? null)],
+                ['Responsable del vehículo (conductor asignado)', pdf_val($c['conductor_nombre'] ?? null)],
             ], $campo); ?>
             <table class="grid two-col" style="margin-top:4px;">
                 <tr>
