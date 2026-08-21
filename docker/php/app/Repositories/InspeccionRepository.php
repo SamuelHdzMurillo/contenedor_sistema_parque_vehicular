@@ -143,12 +143,13 @@ final class InspeccionRepository extends BaseRepository
         try {
             $this->execute(
                 'UPDATE inspecciones SET
-                    folio = ?, vehiculo_id = ?, kilometraje = ?, es_historico = ?, nivel_combustible = ?,
+                    folio = ?, vehiculo_id = ?, responsable_id = ?, kilometraje = ?, es_historico = ?, nivel_combustible = ?,
                     fecha = ?, observaciones_generales = ?, firma_digital = ?, resultado_general = ?
                  WHERE id = ?',
                 [
                     $data['folio'],
                     (int) $data['vehiculo_id'],
+                    (int) $data['responsable_id'],
                     (int) $data['kilometraje'],
                     !empty($data['es_historico']) ? 1 : 0,
                     $data['nivel_combustible'] ?? null,

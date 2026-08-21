@@ -194,6 +194,9 @@ migration_already_effective() {
         023_inspeccion_historico.sql)
             column_exists "inspecciones" "es_historico"
             ;;
+        032_inspeccion_realizado_por.sql)
+            column_exists "inspecciones" "realizado_por"
+            ;;
         024_mantenimiento_intervalos.sql)
             column_exists "mantenimiento_servicios" "intervalo_dias"
             ;;

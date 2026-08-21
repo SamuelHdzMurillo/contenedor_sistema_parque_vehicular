@@ -46,7 +46,7 @@ $daniosAbiertos = $danios_abiertos ?? [];
         <div class="meta-grid">
             <div class="meta-item"><label>Folio</label><span><?= e(inspeccion_folio($i)) ?></span></div>
             <div class="meta-item"><label>Vehículo</label><span><?= e($i['numero_economico'] ?? '—') ?></span></div>
-            <div class="meta-item"><label>Responsable</label><span><?= e($i['responsable_nombre'] ?? '—') ?></span></div>
+            <div class="meta-item"><label>Inspección realizada por</label><span><?= e($i['responsable_nombre'] ?? '—') ?></span></div>
             <div class="meta-item"><label>Fecha de inspección</label><span><?= format_date($i['fecha']) ?></span></div>
             <div class="meta-item"><label>Kilometraje</label><span><?= number_format((int) ($i['kilometraje'] ?? 0)) ?> km</span></div>
             <div class="meta-item"><label>Combustible (gasolina)</label><span><?= e(combustible_fraccion_etiqueta($i['nivel_combustible'] ?? null)) ?></span></div>
@@ -126,11 +126,9 @@ $daniosAbiertos = $danios_abiertos ?? [];
 </div>
 <?php endif; ?>
 
-<?php if (!empty($i['firma_digital'])): ?>
 <div class="card">
-    <div class="card-header"><h3>Firma digital</h3></div>
+    <div class="card-header"><h3>Inspección realizada por</h3></div>
     <div class="card-body">
-        <img src="<?= e(url('storage/uploads/' . ltrim($i['firma_digital'], '/'))) ?>" alt="Firma" style="max-width:320px;border:1px solid var(--border-color);border-radius:8px">
+        <p class="mb-0"><strong><?= e($i['responsable_nombre'] ?? '—') ?></strong></p>
     </div>
 </div>
-<?php endif; ?>

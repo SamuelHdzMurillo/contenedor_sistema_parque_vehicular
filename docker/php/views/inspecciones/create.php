@@ -3,6 +3,10 @@ $pageTitle = 'Nueva inspección';
 $vehiculos = $vehiculos ?? [];
 $items = $items ?? [];
 $lucesTablero = $luces_tablero ?? [];
+$responsables = $responsables ?? [];
+$areas = $areas ?? [];
+$responsableActual = old('responsable_id', auth_id());
+$puedeAgregarResponsable = can('usuarios.create') || can('inspecciones.create');
 $preVehiculo = $_GET['vehiculo_id'] ?? old('vehiculo_id');
 $selectedLuces = old('luces_tablero', []);
 if (!is_array($selectedLuces)) {
@@ -36,6 +40,22 @@ if ($selectedLuces === [] && !empty($vehiculo_luces_preset) && is_array($vehicul
                         </option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="responsable_id">Inspección realizada por <span class="required">*</span></label>
+                    <div class="input-group">
+                        <select id="responsable_id" name="responsable_id" class="form-select" required data-responsable-select>
+                            <option value="">Seleccione…</option>
+                            <?php foreach ($responsables as $u): ?>
+                            <option value="<?= (int) $u['id'] ?>" <?= (string) $responsableActual === (string) $u['id'] ? 'selected' : '' ?>>
+                                <?= e($u['nombre_completo'] ?? $u['nombre']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if ($puedeAgregarResponsable): ?>
+                        <button type="button" class="btn btn-accent" data-responsable-quick-open title="Agregar persona" aria-label="Agregar persona">+</button>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="fecha">Fecha <span class="required">*</span></label>
@@ -127,17 +147,6 @@ if ($selectedLuces === [] && !empty($vehiculo_luces_preset) && is_array($vehicul
                 <textarea id="observaciones_generales" name="observaciones_generales" class="form-textarea"><?= e((string) old('observaciones_generales')) ?></textarea>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Firma digital del responsable</label>
-                <div class="signature-pad-wrapper" data-signature-pad>
-                    <canvas></canvas>
-                    <div class="signature-actions">
-                        <button type="button" class="btn btn-sm btn-secondary" data-signature-clear>Limpiar firma</button>
-                    </div>
-                    <input type="hidden" name="firma_data" value="">
-                </div>
-            </div>
-
             <div class="d-flex gap-1">
                 <button type="submit" class="btn btn-primary">Registrar inspección</button>
                 <a href="<?= url('formatos/inspeccion') ?>" class="btn btn-secondary" target="_blank">Formato PDF en blanco</a>
@@ -146,3 +155,4 @@ if ($selectedLuces === [] && !empty($vehiculo_luces_preset) && is_array($vehicul
         </div>
     </div>
 </form>
+<?php App\Core\View::component('modal-responsable-quick', ['areas' => $areas]); ?>

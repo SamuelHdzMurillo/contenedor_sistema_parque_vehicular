@@ -1481,6 +1481,17 @@ function inspeccion_folio(array $inspeccion): string
     return 'INS-' . $year . '-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT);
 }
 
+/** Nombre de quien realizó la inspección (texto capturado o usuario que la registró). */
+function inspeccion_realizada_por(array $inspeccion): string
+{
+    $nombre = trim((string) ($inspeccion['realizado_por'] ?? ''));
+    if ($nombre !== '') {
+        return $nombre;
+    }
+
+    return trim((string) ($inspeccion['responsable_nombre'] ?? ''));
+}
+
 function vehiculo_tipo_combustible_etiqueta(?string $tipo): string
 {
     if ($tipo === null || trim($tipo) === '') {

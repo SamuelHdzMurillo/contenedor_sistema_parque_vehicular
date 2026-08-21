@@ -44,7 +44,7 @@ final class UsuarioController extends BaseController
 
     public function quickStore(Request $request): never
     {
-        if (!can('usuarios.create') && !can('mantenimiento.create')) {
+        if (!can('usuarios.create') && !can('mantenimiento.create') && !can('inspecciones.create')) {
             Response::json(['ok' => false, 'error' => 'No tiene permiso para registrar responsables.'], 403);
         }
 

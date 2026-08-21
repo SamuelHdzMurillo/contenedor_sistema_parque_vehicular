@@ -11,7 +11,7 @@
 <div class="card">
     <div class="table-responsive">
         <table class="table">
-            <thead><tr><th>Folio</th><th>Fecha inspección</th><th>Vehículo</th><th>Responsable</th><th>Km</th><th>Combustible</th><th>Resultado</th><th></th></tr></thead>
+            <thead><tr><th>Folio</th><th>Fecha inspección</th><th>Vehículo</th><th>Realizada por</th><th>Km</th><th>Combustible</th><th>Resultado</th><th></th></tr></thead>
             <tbody>
                 <?php if (empty($data)): ?>
                 <tr><td colspan="8" class="text-center text-muted">Sin inspecciones</td></tr>

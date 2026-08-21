@@ -65,7 +65,7 @@ ob_start();
         ['label' => 'Fecha de registro en sistema', 'value' => $i ? format_datetime($i['created_at'] ?? null) : ''],
         ['label' => 'Kilometraje al inspeccionar', 'value' => isset($i['kilometraje']) ? number_format((int) $i['kilometraje']) . ' km' : ''],
         ['label' => 'Nivel de combustible (gasolina)', 'value' => isset($i['nivel_combustible']) ? combustible_fraccion_etiqueta($i['nivel_combustible']) : ''],
-        ['label' => 'Responsable de la inspección', 'value' => pdf_val($i['responsable_nombre'] ?? null, '')],
+        ['label' => 'Inspección realizada por', 'value' => pdf_val($i['responsable_nombre'] ?? null, '')],
         ['label' => 'Resultado general', 'value' => pdf_val(isset($i['resultado_general']) ? ucfirst($i['resultado_general']) : null, '')],
     ]);
     ?>
@@ -151,7 +151,7 @@ ob_start();
 <div class="section">
     <?php
     pdf_render_firmas([
-        ['label' => 'Responsable de la inspección', 'nombre' => $i['responsable_nombre'] ?? '', 'firma' => $i['firma_digital'] ?? null],
+        ['label' => 'Inspección realizada por', 'nombre' => $i !== null ? (string) ($i['responsable_nombre'] ?? '') : ''],
     ]);
     ?>
 </div>

@@ -5,6 +5,8 @@ $i = $inspeccion;
 $vehiculos = $vehiculos ?? [];
 $items = $items ?? [];
 $lucesTablero = $luces_tablero ?? [];
+$responsables = $responsables ?? [];
+$areas = $areas ?? [];
 $itemValues = [];
 $itemObs = [];
 foreach ($i['items'] ?? [] as $row) {
@@ -17,6 +19,15 @@ if (!is_array($selectedLuces)) {
 }
 $preVehiculo = old('vehiculo_id', $i['vehiculo_id'] ?? '');
 $esHistorico = old('es_historico', !empty($i['es_historico']));
+$responsableActual = old('responsable_id', $i['responsable_id'] ?? auth_id());
+$puedeAgregarResponsable = can('usuarios.create') || can('inspecciones.create');
+$responsableIds = array_map('intval', array_column($responsables, 'id'));
+if ((int) $responsableActual > 0 && !in_array((int) $responsableActual, $responsableIds, true)) {
+    $responsables[] = [
+        'id' => (int) $responsableActual,
+        'nombre_completo' => $i['responsable_nombre'] ?? ('Usuario #' . (int) $responsableActual),
+    ];
+}
 ?>
 <div class="page-header">
     <div>
@@ -45,6 +56,22 @@ $esHistorico = old('es_historico', !empty($i['es_historico']));
                         </option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="responsable_id">Inspección realizada por <span class="required">*</span></label>
+                    <div class="input-group">
+                        <select id="responsable_id" name="responsable_id" class="form-select" required data-responsable-select>
+                            <option value="">Seleccione…</option>
+                            <?php foreach ($responsables as $u): ?>
+                            <option value="<?= (int) $u['id'] ?>" <?= (string) $responsableActual === (string) $u['id'] ? 'selected' : '' ?>>
+                                <?= e($u['nombre_completo'] ?? $u['nombre']) ?>
+                            </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if ($puedeAgregarResponsable): ?>
+                        <button type="button" class="btn btn-accent" data-responsable-quick-open title="Agregar persona" aria-label="Agregar persona">+</button>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="fecha">Fecha <span class="required">*</span></label>
@@ -139,21 +166,6 @@ $esHistorico = old('es_historico', !empty($i['es_historico']));
                 <textarea id="observaciones_generales" name="observaciones_generales" class="form-textarea"><?= e((string) old('observaciones_generales', $i['observaciones_generales'] ?? '')) ?></textarea>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Firma digital del responsable</label>
-                <?php if (!empty($i['firma_digital'])): ?>
-                <p class="form-hint text-muted mb-1">Firma actual registrada. Dibuje abajo solo si desea reemplazarla.</p>
-                <img src="<?= e(url('storage/uploads/' . ltrim($i['firma_digital'], '/'))) ?>" alt="Firma actual" style="max-width:240px;border:1px solid var(--border-color);border-radius:8px;margin-bottom:0.75rem">
-                <?php endif; ?>
-                <div class="signature-pad-wrapper" data-signature-pad>
-                    <canvas></canvas>
-                    <div class="signature-actions">
-                        <button type="button" class="btn btn-sm btn-secondary" data-signature-clear>Limpiar firma</button>
-                    </div>
-                    <input type="hidden" name="firma_data" value="">
-                </div>
-            </div>
-
             <div class="d-flex gap-1">
                 <button type="submit" class="btn btn-primary">Guardar cambios</button>
                 <a href="<?= url('inspecciones/' . $i['id']) ?>" class="btn btn-secondary">Cancelar</a>
@@ -161,3 +173,4 @@ $esHistorico = old('es_historico', !empty($i['es_historico']));
         </div>
     </div>
 </form>
+<?php App\Core\View::component('modal-responsable-quick', ['areas' => $areas]); ?>

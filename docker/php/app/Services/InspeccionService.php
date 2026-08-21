@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Helpers\FileUploader;
 use App\Repositories\AlertaRepository;
 use App\Repositories\CatalogoRepository;
 use App\Repositories\DanioRepository;
@@ -33,6 +32,8 @@ final class InspeccionService
             'vehiculos' => $this->catalogos->getVehiculosOperativos(),
             'items' => InspeccionRepository::INSPECCION_ITEMS,
             'luces_tablero' => InspeccionRepository::LUCES_TABLERO,
+            'responsables' => $this->catalogos->getUsersForSelect(),
+            'areas' => $this->catalogos->getAreas(),
         ];
     }
 
@@ -105,10 +106,8 @@ final class InspeccionService
         $this->assertKilometrajeValido($data);
         $items = $this->parseItems($data);
         $lucesTablero = $this->parseLucesTablero($data);
-        $data['responsable_id'] = $userId;
-        if (!empty($data['firma_data'])) {
-            $data['firma_digital'] = FileUploader::saveBase64Signature((string) $data['firma_data'], 'firmas/inspecciones');
-        }
+        $data['responsable_id'] = $this->resolveResponsableId($data, $userId);
+        $data['firma_digital'] = null;
         $data['resultado_general'] = $this->calcularResultadoGeneral($items);
         $data['folio'] = $this->repo->generateFolio();
         $data['nivel_combustible'] = $this->parseNivelCombustible($data);
@@ -137,14 +136,11 @@ final class InspeccionService
 
             $items = $this->parseItems($data);
             $lucesTablero = $this->parseLucesTablero($data);
-
-            if (!empty($data['firma_data'])) {
-                $this->eliminarFirmaArchivo($before['firma_digital'] ?? null);
-                $data['firma_digital'] = FileUploader::saveBase64Signature((string) $data['firma_data'], 'firmas/inspecciones');
-            } else {
-                $data['firma_digital'] = $before['firma_digital'] ?? null;
-            }
-
+            $data['responsable_id'] = $this->resolveResponsableId(
+                $data,
+                (int) ($before['responsable_id'] ?? $userId)
+            );
+            $data['firma_digital'] = $before['firma_digital'] ?? null;
             $data['resultado_general'] = $this->calcularResultadoGeneral($items);
             $data['folio'] = $before['folio'];
             $data['nivel_combustible'] = $this->parseNivelCombustible($data);
@@ -173,6 +169,19 @@ final class InspeccionService
         } catch (\Throwable $e) {
             return user_facing_error($e, 'No se pudo actualizar la inspección.');
         }
+    }
+
+    private function resolveResponsableId(array $data, int $fallbackUserId): int
+    {
+        $id = (int) ($data['responsable_id'] ?? 0);
+        if ($id <= 0) {
+            $id = $fallbackUserId;
+        }
+        if ($id <= 0) {
+            throw new \RuntimeException('Seleccione quién realizó la inspección.');
+        }
+
+        return $id;
     }
 
     private function normalizeHistorico(array $data): array
@@ -316,18 +325,6 @@ final class InspeccionService
             if (is_file($path)) {
                 @unlink($path);
             }
-        }
-    }
-
-    private function eliminarFirmaArchivo(mixed $ruta): void
-    {
-        $ruta = trim((string) ($ruta ?? ''));
-        if ($ruta === '') {
-            return;
-        }
-        $path = storage_path('uploads/' . ltrim($ruta, '/'));
-        if (is_file($path)) {
-            @unlink($path);
         }
     }
 }
