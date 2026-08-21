@@ -5,12 +5,28 @@ BASE_DIR="/var/www/html/database"
 MIG_DIR="${BASE_DIR}/migrations"
 SEED_DIR="${BASE_DIR}/seeds"
 
+KEEP_DB_HOST="${DB_HOST-}"
+KEEP_DB_PORT="${DB_PORT-}"
+KEEP_DB_NAME="${DB_NAME-}"
+KEEP_DB_DATABASE="${DB_DATABASE-}"
+KEEP_DB_USER="${DB_USER-}"
+KEEP_DB_USERNAME="${DB_USERNAME-}"
+KEEP_DB_PASSWORD="${DB_PASSWORD-}"
+
 if [ -f /var/www/html/.env ]; then
     set -a
     # shellcheck disable=SC1091
     source <(grep -v '^#' /var/www/html/.env | grep -v '^\s*$' | sed 's/\r$//')
     set +a
 fi
+
+[ -n "$KEEP_DB_HOST" ] && DB_HOST="$KEEP_DB_HOST"
+[ -n "$KEEP_DB_PORT" ] && DB_PORT="$KEEP_DB_PORT"
+[ -n "$KEEP_DB_NAME" ] && DB_NAME="$KEEP_DB_NAME"
+[ -n "$KEEP_DB_DATABASE" ] && DB_DATABASE="$KEEP_DB_DATABASE"
+[ -n "$KEEP_DB_USER" ] && DB_USER="$KEEP_DB_USER"
+[ -n "$KEEP_DB_USERNAME" ] && DB_USERNAME="$KEEP_DB_USERNAME"
+[ -n "$KEEP_DB_PASSWORD" ] && DB_PASSWORD="$KEEP_DB_PASSWORD"
 
 DB_HOST="${DB_HOST:-db}"
 DB_PORT="${DB_PORT:-3306}"
@@ -20,17 +36,17 @@ DB_PASS="${DB_PASSWORD:-parque_pass}"
 
 mysql_cmd() {
     # Forzar utf8mb4 en el cliente evita mojibake (ó → Ã³) al cargar .sql con acentos.
-    mysql --skip-ssl --default-character-set=utf8mb4 -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$@"
+    mysql --skip-ssl --connect-timeout=3 --default-character-set=utf8mb4 -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$@"
 }
 
 wait_for_db() {
     echo "[bootstrap] Esperando MySQL en ${DB_HOST}:${DB_PORT}..."
-    for _ in $(seq 1 60); do
+    for _ in $(seq 1 30); do
         if mysql_cmd -e "SELECT 1" >/dev/null 2>&1; then
             echo "[bootstrap] MySQL disponible."
             return 0
         fi
-        sleep 2
+        sleep 1
     done
     echo "[bootstrap] ERROR: MySQL no respondió a tiempo."
     exit 1
@@ -237,6 +253,11 @@ apply_pending_migrations() {
     ensure_migrations_table
     backfill_schema_migrations
 
+    declare -A already=()
+    while IFS= read -r name; do
+        [ -n "$name" ] && already["$name"]=1
+    done < <(mysql_cmd -N "$DB_NAME" -e "SELECT migration FROM schema_migrations" 2>/dev/null || true)
+
     local applied=0
     for migration in "${MIG_DIR}"/[0-9][0-9][0-9]_*.sql; do
         [ -f "$migration" ] || continue
@@ -244,15 +265,17 @@ apply_pending_migrations() {
         if should_skip_migration "$base"; then
             continue
         fi
-        if migration_applied "$base"; then
+        if [ -n "${already[$base]:-}" ]; then
             continue
         fi
         if migration_already_effective "$base"; then
             mark_migration_applied "$base"
+            already["$base"]=1
             continue
         fi
         if apply_migration_file "$migration" "$base"; then
             mark_migration_applied "$base"
+            already["$base"]=1
             applied=$((applied + 1))
         fi
     done

@@ -3,12 +3,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: parque_vehicular_web:local
     container_name: parque_vehicular_web
     restart: unless-stopped
     ports:
-      - "0.0.0.0:8080:80"
+      - "8080:80"
     volumes:
-      - ./docker/php:/var/www/html
+      - ./docker/php:/var/www/html:cached
+      - php_vendor:/var/www/html/vendor
       - php_sessions:/var/lib/php/sessions
     environment:
       DB_HOST: db
@@ -16,6 +18,8 @@ services:
       DB_NAME: ${MYSQL_DATABASE}
       DB_USER: ${MYSQL_USER}
       DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_DATABASE: ${MYSQL_DATABASE}
+      DB_USERNAME: ${MYSQL_USER}
     depends_on:
       db:
         condition: service_healthy
@@ -26,9 +30,18 @@ services:
     image: mysql:8.0
     container_name: parque_vehicular_db
     restart: unless-stopped
-    command: --log-bin-trust-function-creators=1
+    command:
+      - --skip-log-bin
+      - --skip-name-resolve
+      - --performance-schema=OFF
+      - --innodb-buffer-pool-size=128M
+      - --innodb-flush-log-at-trx-commit=2
+      - --max-connections=50
+      - --table-open-cache=400
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     ports:
-      - "0.0.0.0:3306:3306"
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -36,13 +49,12 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
     networks:
       - parque_net
 
@@ -51,13 +63,15 @@ services:
     container_name: parque_vehicular_phpmyadmin
     restart: unless-stopped
     ports:
-      - "0.0.0.0:8081:80"
+      - "8081:80"
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
       PMA_USER: root
       PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 64M
+      MEMORY_LIMIT: 128M
+      MAX_EXECUTION_TIME: 60
     depends_on:
       db:
         condition: service_healthy
@@ -69,6 +83,8 @@ volumes:
     name: parque_vehicular_mysql_data
   php_sessions:
     name: parque_vehicular_php_sessions
+  php_vendor:
+    name: parque_vehicular_php_vendor
 
 networks:
   parque_net:

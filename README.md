@@ -8,9 +8,17 @@ Entorno local con **PHP 8.2 + Apache**, **MySQL 8** y **phpMyAdmin**, accesible 
 
 ## Inicio rápido
 
+Primera vez (o si cambió el `Dockerfile` / `composer.json`):
+
 ```powershell
 cd c:\xampp\htdocs\contenedor_sistema_parque_vehicular
 docker compose up -d --build
+```
+
+En los siguientes arranques **no uses `--build`**; así no recompila la imagen:
+
+```powershell
+docker compose up -d
 ```
 
 ## Obtener tu IP local
@@ -61,7 +69,7 @@ No se cargan datos de demostración (vehículos, comisiones, catálogos, etc.); 
 
 ## Inicialización de la base de datos
 
-El contenedor **web** ejecuta `docker/php/database/bootstrap.sh` al arrancar. Si la base de datos aún no tiene el esquema, aplica migraciones, roles, permisos y usuarios predeterminados. Si ya existe, no hace nada.
+El contenedor **web** ejecuta `docker/php/database/bootstrap.sh` al arrancar. Si la base de datos aún no tiene el esquema, aplica migraciones, roles, permisos y usuarios predeterminados. Si ya existe, solo aplica migraciones pendientes.
 
 Para reiniciar desde cero:
 
@@ -76,6 +84,7 @@ Los datos persisten en volúmenes Docker (no se pierden al reiniciar):
 
 - `parque_vehicular_mysql_data` — base de datos MySQL
 - `parque_vehicular_php_sessions` — sesiones PHP
+- `parque_vehicular_php_vendor` — librerías PHP (`vendor`, más rápido que leerlas desde Windows)
 
 Tu código PHP va en la carpeta `docker/php/` (montada en el contenedor). La raíz web es `public/`.
 
@@ -99,6 +108,10 @@ docker compose down
 
 # Detener y borrar datos (¡cuidado!)
 docker compose down -v
+
+# Si cambiaste composer.json, reconstruye e instala de nuevo:
+# docker volume rm parque_vehicular_php_vendor
+# docker compose up -d --build
 ```
 
 ## Firewall Windows

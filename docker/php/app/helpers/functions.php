@@ -9,6 +9,14 @@ function env(string $key, mixed $default = null): mixed
     static $loaded = false;
     static $vars = [];
 
+    $fromOs = $_ENV[$key] ?? $_SERVER[$key] ?? false;
+    if ($fromOs === false) {
+        $fromOs = getenv($key);
+    }
+    if ($fromOs !== false && $fromOs !== '') {
+        return $fromOs;
+    }
+
     if (!$loaded) {
         $path = BASE_PATH . '/.env';
         if (is_file($path)) {
@@ -25,7 +33,7 @@ function env(string $key, mixed $default = null): mixed
         $loaded = true;
     }
 
-    return $vars[$key] ?? $_ENV[$key] ?? $default;
+    return $vars[$key] ?? $default;
 }
 
 function config(string $file, ?string $key = null, mixed $default = null): mixed
